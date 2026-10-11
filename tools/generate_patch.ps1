@@ -2,8 +2,8 @@ param(
     [string]$BaselineZip,
     [string]$BaselineDir,
     [string]$TargetDir,
-    [string]$FromVersion = "1.1.0",
-    [string]$ToVersion = "1.2.0",
+    [string]$FromVersion = "1.2.0",
+    [string]$ToVersion = "1.3.0",
     [string]$OutputDir
 )
 

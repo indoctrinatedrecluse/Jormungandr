@@ -5,6 +5,84 @@ All notable changes to the **Jörmungandr IDE** project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-12
+
+### 🚀 Major Feature & Reliability Release
+
+The **v1.3.0** release delivers deep workflow enhancements for Data Scientists, ML Engineers, and Data Platform Architects, alongside critical lifecycle stability fixes and passive update safeguards.
+
+---
+
+### 🌟 Key Feature Highlights
+
+#### 🛠️ 1. Elimination of "Saving Settings" IDE Exit Hang
+- **Daemon Lifecycle Enforcement**: All background polling loops (`HardwareTelemetryService`, ZeroMQ heartbeats, Python kernel monitors) are now decoupled with non-blocking daemon threads and cooperative shutdown flags (`AtomicBoolean`).
+- **Cooperative `AppLifecycleListener` Hook**: Added `JormungandrShutdownListener` hooking into IntelliJ's `appClosing()` phase to proactively disconnect ZeroMQ sockets and terminate running kernel sessions cleanly before IDE settings persistence executes.
+- **Fast Process Tree Termination**: `SubprocessPythonSession.kt` gracefully sends `SIGTERM` / `SIGINT` to Python and kernel processes with a 1.5s timeout before issuing non-blocking process tree destruction (`destroyForcibly()`), preventing zombie subprocesses from holding file locks on workspace `.xml` files.
+
+#### 🔄 2. Passive Auto-Update Notification & Rollback Safeguards
+- **Non-blocking Startup Check**: `PassiveUpdateCheckListener` queries GitHub Releases asynchronously on IDE startup without delaying UI rendering.
+- **Notification Balloons**: Surfaces actionable update notifications with options to inspect release notes or trigger the one-click patch updater.
+- **Rollback Snapshots**: `jormungandr-updater.ps1` now automatically creates a timestamped zip backup snapshot (`backup_<timestamp>.zip`) of modified directories before applying any patch, enabling instantaneous rollback if patch application is interrupted.
+
+#### 🔬 3. Variable & PyTorch Tensor Inspector Tool Window
+- **Interactive Tool Window**: Dedicated docked tool window (`Variable Inspector`) providing live variable introspection across active Jupyter notebooks and Python REPL sessions.
+- **Dedicated Inspector Tabs**: Separate views for **DataFrames**, **PyTorch Tensors**, **NumPy Arrays**, and **Scalars / Primitives**.
+- **Deep Tensor Telemetry**: Displays tensor shapes, memory footprints, dtypes, device placement (`cuda:0`, `cpu`, `mps`), min/mean/max stats, gradient tracking flags (`requires_grad`), and layout details.
+- **Native Polars & Pandas Introspection**: Inspect schema types, row counts, and null distributions directly from the variable tree.
+
+#### 🤖 4. Inline Ghost-Text AI Autocomplete (Ollama / vLLM FIM)
+- **Fill-In-the-Middle (FIM) Integration**: Full support for FIM prompting (`<PRE>`, `<SUF>`, `<MID>`) optimized for DeepSeek-Coder, CodeLlama, StarCoder, and Qwen2.5-Coder.
+- **Native Platform Inline Completion**: Non-blocking `JormungandrInlineCompletionProvider` rendering faint ghost-text inline completions in real-time as you type.
+- **Smooth Muscle Memory**: Single-keystroke `Tab` acceptance and `Esc` dismissal with debounced query dispatching to avoid saturating local GPU inference daemons.
+
+#### 📊 5. Evidently-Style Dataset Drift Studio & Perturbation Simulator
+- **Reference vs Current Dataset Comparator**: Visual side-by-side distribution analysis comparing baseline training data against live production inference batches.
+- **Multi-Test Statistical Scorecard**: Integrated scoring combining Population Stability Index (PSI), Two-Sample Kolmogorov-Smirnov (K-S) test, Wasserstein Distance, and Jensen-Shannon Divergence.
+- **Synthetic Perturbation Simulator**: Stress-test data quality and pipeline drift triggers by interactively injecting synthetic drift (mean shifts, variance scaling, missing value spikes, categorical flips) directly within the IDE.
+
+#### 🧊 6. Visual Lakehouse Time-Travel Snapshot Scrubber & History Replay
+- **Interactive Timeline Scrubber**: Visual commit timeline for Delta Lake (`_delta_log/*.json`) and Apache Iceberg metadata catalogs.
+- **Snapshot Diff Inspection**: Compare file additions, removals, and schema evolutions between arbitrary snapshot commits.
+- **Animated History Replay**: Step through lakehouse table mutations chronologically with animated replay to visualize data ingestion and compaction cycles over time.
+
+#### 🗺️ 7. Visual Query Execution Plan DAG (`EXPLAIN ANALYZE`)
+- **Interactive Plan DAG Canvas**: Parses and visualizes DuckDB and PostgreSQL `EXPLAIN (ANALYZE)` query plans as interactive 2D directed acyclic graphs.
+- **Cost & Timing Breakdown**: Node-level metrics detailing execution time, operator cost percentages, and estimated vs. actual row counts.
+- **Bottleneck Badging**: Visual warning badges highlighting expensive sequential scans, nested loop joins, high-memory hash joins, and sorting bottlenecks.
+
+#### ⚡ 8. Astral `uv` Python Environment Manager & Status Bar Widget
+- **First-Class `uv` Support**: Native detection of Astral's ultra-fast `uv` package manager and virtual environment orchestrator.
+- **Status Bar Environment Widget**: Real-time display of the active Python interpreter, environment kind (`uv`, `conda`, `venv`, `system`), and version.
+- **1-Click Sync**: Synchronize dependencies (`uv sync`), inspect installed packages (`uv pip list`), and create virtual environments directly from the IDE.
+
+#### 🌊 9. Expanded New Project Wizard Templates
+- **Delta Lakehouse Analytics Template**: Pre-configured starter project bundling DuckDB, Delta Lake, Polars, and sample time-series data.
+- **Modern Data Stack & Airflow Template**: Production pipeline layout with Apache Airflow DAGs, dbt models, and automated data quality checks.
+
+---
+
+## [1.2.0] - 2026-10-11
+
+### ⚡ Smart Delta Auto-Updater Architecture
+
+The **v1.2.0** milestone introduces a bandwidth-efficient in-place delta update mechanism designed to upgrade portable IDE installations with minimal download overhead.
+
+---
+
+### 🌟 Key Feature Highlights
+
+#### 📦 1. Delta Patch Packaging Engine
+- **Lightweight Incremental Patches**: Compares releases file-by-file and generates `Jormungandr-Patch-<from>-to-<to>.zip` containing only changed, added, and deleted files.
+- **Manifest-Driven Updates**: Includes a cryptographically verified `patch_manifest.json` with SHA-256 checksums, byte sizes, relative file paths, and deletion manifests.
+- **Sub-10MB Updates**: Reduces typical release update sizes from ~800MB full IDE downloads down to 5–15MB delta packages.
+
+#### 🛡️ 2. Standalone Portable Updater (`jormungandr-updater.ps1` & `patch_portable_ide.py`)
+- **Atomic Staged Patching**: Extracts changes to a temporary staging area and validates all SHA-256 checksums prior to touching the live IDE installation.
+- **In-Place File Replacement**: Safely overwrites changed jars, plugins, and launcher executables while preserving user configurations and local projects.
+- **Rollback Safeguards**: Backs up modified components before overwriting to ensure clean recovery in case of system interruption.
+- **Manifest-Guided Cleanup**: Automatically removes obsolete files and deprecated plugins declared in the deletion manifest.
+
 ---
 
 ## [1.0.0] - 2026-10-07

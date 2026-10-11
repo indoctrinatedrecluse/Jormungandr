@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
-$tag = "v1.2.0"
+$tag = "v1.3.0"
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Packaging Jormungandr Release: $tag" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -99,11 +99,11 @@ if (Test-Path $portableZip) {
     Write-Error "Failed to produce $portableZip"
 }
 
-# 3. Smart Delta Patch Package (v1.1.0 -> v1.2.0)
-$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.1.0-windows-x64.zip"
+# 3. Smart Delta Patch Package (v1.2.0 -> v1.3.0)
+$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.2.0-windows-x64.zip"
 if (Test-Path $baselineZip) {
-    Write-Host "Generating Smart Delta Patch against v1.1.0 baseline..." -ForegroundColor Yellow
-    & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion "1.1.0" -ToVersion "1.2.0" -OutputDir $distDir
+    Write-Host "Generating Smart Delta Patch against v1.2.0 baseline..." -ForegroundColor Yellow
+    & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion "1.2.0" -ToVersion "1.3.0" -OutputDir $distDir
 }
 
 # 4. Turnkey Windows Installer (.exe via Inno Setup)
