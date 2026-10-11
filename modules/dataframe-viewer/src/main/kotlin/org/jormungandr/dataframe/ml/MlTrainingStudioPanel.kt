@@ -676,8 +676,29 @@ class MlTrainingStudioPanel(
             MlExperimentTrackerService.logMetric(run.runId, "inertia", it.inertia, 1)
         }
 
+        // Log Hardware Telemetry Profiling Snapshot
+        runCatching {
+            val telemetryClass = Class.forName("org.jormungandr.shell.telemetry.HardwareTelemetryService")
+            val getInst = telemetryClass.getMethod("getInstance")
+            val inst = getInst.invoke(null)
+            val getSnap = telemetryClass.getMethod("getCurrentSnapshot")
+            val snap = getSnap.invoke(inst)
+            if (snap != null) {
+                val sc = snap.javaClass
+                val devName = sc.getMethod("getGpuName").invoke(snap)?.toString() ?: "Host CPU"
+                val gpuUtil = (sc.getMethod("getGpuComputePercent").invoke(snap) as? Number)?.toDouble() ?: 0.0
+                val vramPct = (sc.getMethod("getVramUsagePercent").invoke(snap) as? Number)?.toDouble() ?: 0.0
+                val vramUsedMb = (sc.getMethod("getVramUsedMb").invoke(snap) as? Number)?.toDouble() ?: 0.0
+
+                MlExperimentTrackerService.logParameter(run.runId, "hardware_device", devName)
+                MlExperimentTrackerService.logMetric(run.runId, "gpu_util_pct", gpuUtil, 1)
+                MlExperimentTrackerService.logMetric(run.runId, "vram_util_pct", vramPct, 1)
+                MlExperimentTrackerService.logMetric(run.runId, "vram_used_mb", vramUsedMb, 1)
+            }
+        }
+
         MlExperimentTrackerService.endRun(run.runId, RunStatus.COMPLETED)
-        JOptionPane.showMessageDialog(this, "Model run '${run.runName}' logged to ML Experiment Studio!", "Experiment Logged", JOptionPane.INFORMATION_MESSAGE)
+        JOptionPane.showMessageDialog(this, "Model run '${run.runName}' logged to ML Experiment Studio (with hardware telemetry profiling)!", "Experiment Logged", JOptionPane.INFORMATION_MESSAGE)
     }
 
     private fun copyEvaluationSummary() {

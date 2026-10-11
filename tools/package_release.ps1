@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
-$tag = "v1.0.0"
+$tag = "v1.1.0"
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Packaging Jormungandr Release: $tag" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -91,6 +91,19 @@ if (Test-Path $portableZip) {
     Write-Host "[OK] Standalone portable package created successfully: $portableZip ($zipSize MB)" -ForegroundColor Green
 } else {
     Write-Error "Failed to produce $portableZip"
+}
+
+# 3. Turnkey Windows Installer (.exe via Inno Setup)
+Write-Host "Compiling Windows Installer executable (.exe)..." -ForegroundColor Yellow
+$installerVersion = $tag.TrimStart('v')
+& "$ProjectRoot\tools\build_installer.ps1" -SourceDir $stagingDir -Version $installerVersion -OutputDir $distDir
+
+$installerExe = Join-Path $distDir "Jormungandr-Setup-v$installerVersion-x64.exe"
+if (Test-Path $installerExe) {
+    $exeSize = [math]::Round((Get-Item $installerExe).Length / 1MB, 2)
+    Write-Host "[OK] Turnkey Windows installer created successfully: $installerExe ($exeSize MB)" -ForegroundColor Green
+} else {
+    Write-Error "Failed to produce Windows installer $installerExe"
 }
 
 # Clean staging directory to reclaim disk space

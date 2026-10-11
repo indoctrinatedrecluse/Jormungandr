@@ -236,20 +236,24 @@ class SubprocessPythonSession(
 
     override suspend fun shutdown() = withContext(Dispatchers.IO) {
         _status.value = KernelStatus.DISCONNECTED
+        sessionScope.cancel()
+
         runCatching {
             writer?.write("__JG_EXIT__")
             writer?.newLine()
             writer?.flush()
         }
-        runCatching { writer?.close() }
-        runCatching { reader?.close() }
+
         process?.destroyForcibly()
         process = null
+
+        runCatching { writer?.close() }
+        runCatching { reader?.close() }
         writer = null
         reader = null
+
         runnerTempFile?.delete()
         runnerTempFile = null
-        sessionScope.cancel()
     }
 
     private fun buildRunnerScript(): String {

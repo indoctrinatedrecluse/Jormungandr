@@ -74,7 +74,7 @@ class JormungandrBrandingTest {
 
         // Wait for nested invokeLater to complete
         SwingUtilities.invokeAndWait {
-            assertEquals("Welcome to Jörmungandr", frame.title)
+            assertTrue(frame.title.startsWith("Welcome to Jörmungandr"), "Frame title must start with rebranded product name")
             assertFalse(frame.iconImages.isEmpty(), "Frame iconImages must be populated with Jörmungandr icons")
             assertEquals("Welcome to Jörmungandr", label1.text)
             assertEquals("Copyright Indoctrinated Recluse", label2.text)

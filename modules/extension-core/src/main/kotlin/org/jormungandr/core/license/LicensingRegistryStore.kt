@@ -228,26 +228,29 @@ object LicensingRegistryStore {
                     }
                 }
             }
-            process.waitFor()
+            val exited = process.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS)
+            if (!exited) process.destroyForcibly()
             result
         }.getOrNull()
     }
 
     private fun runRegAdd(valueName: String, valueData: String) {
         runCatching {
-            ProcessBuilder("reg", "add", REG_PATH, "/v", valueName, "/t", "REG_SZ", "/d", valueData, "/f")
+            val process = ProcessBuilder("reg", "add", REG_PATH, "/v", valueName, "/t", "REG_SZ", "/d", valueData, "/f")
                 .redirectErrorStream(true)
                 .start()
-                .waitFor()
+            val exited = process.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS)
+            if (!exited) process.destroyForcibly()
         }
     }
 
     private fun runRegDelete(valueName: String) {
         runCatching {
-            ProcessBuilder("reg", "delete", REG_PATH, "/v", valueName, "/f")
+            val process = ProcessBuilder("reg", "delete", REG_PATH, "/v", valueName, "/f")
                 .redirectErrorStream(true)
                 .start()
-                .waitFor()
+            val exited = process.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS)
+            if (!exited) process.destroyForcibly()
         }
     }
 }

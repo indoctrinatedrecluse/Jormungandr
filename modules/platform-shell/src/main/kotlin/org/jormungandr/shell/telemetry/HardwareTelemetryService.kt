@@ -1,11 +1,13 @@
 package org.jormungandr.shell.telemetry
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.lang.management.ManagementFactory
+import java.util.ArrayDeque
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -49,7 +51,7 @@ fun interface HardwareTelemetryListener {
  * Polls hardware sensors cross-platform (nvidia-smi, rocm-smi, macOS Metal, Host RAM/CPU).
  */
 @Service(Service.Level.APP)
-class HardwareTelemetryService {
+class HardwareTelemetryService : Disposable {
 
     private val logger = Logger.getInstance(HardwareTelemetryService::class.java)
     private val scheduler = Executors.newSingleThreadScheduledExecutor { r ->
@@ -58,12 +60,17 @@ class HardwareTelemetryService {
 
     private val listeners = CopyOnWriteArrayList<HardwareTelemetryListener>()
     private val oomAlertFired = AtomicBoolean(false)
+    private val history = ArrayDeque<HardwareTelemetrySnapshot>()
+    private val historyLock = Any()
 
     @Volatile
     var currentSnapshot: HardwareTelemetrySnapshot = computeInitialSnapshot()
         private set
 
     init {
+        synchronized(historyLock) {
+            history.addLast(currentSnapshot)
+        }
         // Poll every 2.5 seconds
         scheduler.scheduleWithFixedDelay({
             try {
@@ -83,9 +90,31 @@ class HardwareTelemetryService {
         listeners.remove(listener)
     }
 
+    fun getTelemetryHistory(): List<HardwareTelemetrySnapshot> {
+        synchronized(historyLock) {
+            return history.toList()
+        }
+    }
+
+    override fun dispose() {
+        try {
+            scheduler.shutdownNow()
+        } catch (_: Exception) {}
+        listeners.clear()
+        synchronized(historyLock) {
+            history.clear()
+        }
+    }
+
     private fun pollHardware() {
         val snapshot = sampleTelemetry()
         currentSnapshot = snapshot
+        synchronized(historyLock) {
+            history.addLast(snapshot)
+            while (history.size > 60) {
+                history.removeFirst()
+            }
+        }
 
         // OOM Warning Watchdog
         if (snapshot.oomRiskState == HardwareTelemetrySnapshot.OomRiskState.CRITICAL_OOM_RISK) {
@@ -129,12 +158,14 @@ class HardwareTelemetryService {
                 .redirectErrorStream(true)
                 .start()
 
-            val lines = BufferedReader(InputStreamReader(process.inputStream)).readLines()
             val exited = process.waitFor(1200, TimeUnit.MILLISECONDS)
-            if (!exited || process.exitValue() != 0 || lines.isEmpty()) {
+            if (!exited || process.exitValue() != 0) {
                 if (!exited) process.destroyForcibly()
                 return null
             }
+
+            val lines = BufferedReader(InputStreamReader(process.inputStream)).readLines()
+            if (lines.isEmpty()) return null
 
             // CSV format: Name, Driver, Total, Used, Free, Util, Temp
             val parts = lines[0].split(",").map { it.trim() }

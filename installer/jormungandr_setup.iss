@@ -2,11 +2,11 @@
 ; Apache 2.0 (c) 2025-2026 indoctrinatedrecluse
 
 #define MyAppName "Jörmungandr"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "indoctrinatedrecluse"
 #define MyAppURL "https://github.com/indoctrinatedrecluse/Jormungandr"
-#define MyAppExeName "bin\jormungandr64.exe"
-#define MyAppIcon "assets\icons\jormungandr.ico"
+#define MyAppExeName "bin\idea64.exe"
+#define MyAppIcon "..\assets\icons\jormungandr.ico"
 
 #ifndef SourceDir
   #define SourceDir "..\build\test-portable"

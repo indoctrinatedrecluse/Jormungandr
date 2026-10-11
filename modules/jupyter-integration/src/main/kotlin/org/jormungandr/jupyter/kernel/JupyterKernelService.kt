@@ -73,13 +73,16 @@ class JupyterKernelService : Disposable {
 
     override fun dispose() {
         LOG.info("Disposing JupyterKernelService: terminating all active kernel sessions...")
-        for ((key, session) in sessions) {
+        val activeSessions = sessions.values.toList()
+        sessions.clear()
+        for (session in activeSessions) {
             runCatching {
                 kotlinx.coroutines.runBlocking {
-                    session.shutdown()
+                    kotlinx.coroutines.withTimeoutOrNull(1500L) {
+                        session.shutdown()
+                    }
                 }
             }
         }
-        sessions.clear()
     }
 }

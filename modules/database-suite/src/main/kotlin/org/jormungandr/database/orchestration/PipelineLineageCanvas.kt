@@ -328,10 +328,20 @@ class PipelineLineageCanvas(
         g2.color = badgeColor
         g2.drawString(node.type.displayName.uppercase(), node.x + 22, node.y + 16)
 
-        // Status indicator dot
+        // Status indicator dot and running glow
+        if (node.status == PipelineExecutionStatus.RUNNING) {
+            val glowRect = RoundRectangle2D.Double(node.x - 3.0, node.y - 3.0, cardWidth + 6.0, cardHeight + 6.0, 16.0, 16.0)
+            g2.stroke = BasicStroke(2.6f)
+            g2.color = Color(59, 130, 246, 210) // Electric blue pulse
+            g2.draw(glowRect)
+        }
+
         val statusColor = Color.decode(node.status.colorHex)
         g2.color = statusColor
-        g2.fillOval(node.x + cardWidth - 18, node.y + 9, 8, 8)
+        g2.fillOval(node.x + cardWidth - 20, node.y + 7, 10, 10)
+        g2.stroke = BasicStroke(1.2f)
+        g2.color = JBColor(Color.WHITE, Color(30, 41, 59))
+        g2.drawOval(node.x + cardWidth - 20, node.y + 7, 10, 10)
 
         // Node Name
         g2.font = Font("Segoe UI", Font.BOLD, 12)
@@ -342,7 +352,8 @@ class PipelineLineageCanvas(
         // Subtitle / Materialization & Upstream count
         g2.font = Font("Segoe UI", Font.PLAIN, 10)
         g2.color = JBColor(Color(100, 116, 139), Color(148, 163, 184))
-        val subText = "${node.materialization} • In: ${node.upstreamIds.size} Out: ${node.downstreamIds.size}"
+        val statusTag = if (node.status != PipelineExecutionStatus.IDLE) " • [${node.status.displayName.uppercase()}]" else ""
+        val subText = "${node.materialization} • In: ${node.upstreamIds.size} Out: ${node.downstreamIds.size}$statusTag"
         g2.drawString(subText, node.x + 10, node.y + 52)
     }
 }

@@ -62,6 +62,7 @@ class CellComponent(
     var onInsertBelowRequested: ((CellComponent) -> Unit)? = null
     var onSelectNextRequested: ((CellComponent) -> Unit)? = null
     var onSelectPreviousRequested: ((CellComponent) -> Unit)? = null
+    var onPinOutputRequested: ((CellComponent) -> Unit)? = null
 
     private var lastDKeyPressTime: Long = 0L
 
@@ -224,6 +225,9 @@ class CellComponent(
                         Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, sel)
                     }
                 }
+                val pinOutputItem = JMenuItem("📌 Pin Output to Side Panel").apply {
+                    addActionListener { onPinOutputRequested?.invoke(this@CellComponent) }
+                }
                 val delItem = JMenuItem("✕ Delete Cell").apply {
                     addActionListener { onDeleteRequested(this@CellComponent) }
                 }
@@ -234,6 +238,7 @@ class CellComponent(
                 menu.addSeparator()
                 menu.add(clearOutItem)
                 menu.add(copyCodeItem)
+                menu.add(pinOutputItem)
                 menu.addSeparator()
                 menu.add(delItem)
 

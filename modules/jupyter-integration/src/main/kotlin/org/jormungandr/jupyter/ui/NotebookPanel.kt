@@ -66,6 +66,8 @@ class NotebookPanel(
             onRunDagOrder = { topoIds -> runCellsById(topoIds) }
         )
     }
+    private val pinnedOutputPanel = NotebookPinnedOutputPanel(project)
+    private var pinnedBtn: JToggleButton? = null
     private lateinit var mainSplitPane: JSplitPane
 
     private val kernelStatusLabel = JLabel("⚪ Initializing...")
@@ -80,6 +82,7 @@ class NotebookPanel(
 
         rightTabs.addTab("📑 Outline", outlinePanel)
         rightTabs.addTab("⚡ Reactive DAG", dagPanel)
+        rightTabs.addTab("📌 Pinned Output", pinnedOutputPanel)
         rightTabs.isVisible = false
 
         mainSplitPane = JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, rightTabs).apply {
@@ -187,6 +190,26 @@ class NotebookPanel(
             }
         }
 
+        val pinnedBtn = JToggleButton("📌 Pinned").apply {
+            isFocusPainted = false
+            font = font.deriveFont(Font.PLAIN, 11f)
+            toolTipText = "Toggle Pinned Output & Split View panel"
+            addActionListener {
+                if (isSelected) {
+                    rightTabs.isVisible = true
+                    rightTabs.selectedIndex = 2
+                    mainSplitPane.dividerLocation = (width - 440).coerceAtLeast(100)
+                } else {
+                    if (rightTabs.selectedIndex == 2) {
+                        rightTabs.isVisible = false
+                    }
+                }
+                revalidate()
+                repaint()
+            }
+        }
+        this.pinnedBtn = pinnedBtn
+
         val exportBtn = JButton("💾 Export ▾").apply {
             isFocusPainted = false
             font = font.deriveFont(Font.PLAIN, 11f)
@@ -212,6 +235,7 @@ class NotebookPanel(
         leftTools.add(Box.createHorizontalStrut(6))
         leftTools.add(outlineBtn)
         leftTools.add(dagBtn)
+        leftTools.add(pinnedBtn)
         leftTools.add(exportBtn)
         leftTools.add(diffBtn)
 
@@ -284,12 +308,15 @@ class NotebookPanel(
                     it.cell.clearOutputs()
                     it.renderOutputs()
                     saveNotebook()
+                    val cellIdx = cellComponents.indexOf(it)
+                    pinnedOutputPanel.updateCellIfPinned(it.cell, if (cellIdx >= 0) cellIdx else 0)
                 }
             ).apply {
                 onInsertAboveRequested = { insertCellAbove(it) }
                 onInsertBelowRequested = { insertCellBelow(it) }
                 onSelectNextRequested = { selectNextCell(it) }
                 onSelectPreviousRequested = { selectPreviousCell(it) }
+                onPinOutputRequested = { pinCellOutput(it) }
             }
             cellComponents.add(comp)
             cellsContainer.add(comp)
@@ -386,10 +413,16 @@ class NotebookPanel(
             val result = session.execute(cell.source) { output ->
                 if (output is CellOutput.StreamOutput) {
                     comp.appendStreamOutput(output)
+                    SwingUtilities.invokeLater {
+                        val cellIdx = cellComponents.indexOf(comp)
+                        pinnedOutputPanel.updateCellIfPinned(cell, if (cellIdx >= 0) cellIdx else 0)
+                    }
                 } else {
                     SwingUtilities.invokeLater {
                         cell.outputs.add(output)
                         comp.renderOutputs()
+                        val cellIdx = cellComponents.indexOf(comp)
+                        pinnedOutputPanel.updateCellIfPinned(cell, if (cellIdx >= 0) cellIdx else 0)
                     }
                 }
             }
@@ -401,6 +434,8 @@ class NotebookPanel(
                 comp.renderOutputs()
                 saveNotebook()
                 updateReactiveDagState()
+                val cellIdx = cellComponents.indexOf(comp)
+                pinnedOutputPanel.updateCellIfPinned(cell, if (cellIdx >= 0) cellIdx else 0)
             }
 
             // Asynchronously refresh Variable Inspector
@@ -496,7 +531,9 @@ class NotebookPanel(
             onMoveUpRequested = { moveCellUp(it) },
             onMoveDownRequested = { moveCellDown(it) },
             onModified = { saveNotebook() }
-        )
+        ).apply {
+            onPinOutputRequested = { pinCellOutput(it) }
+        }
         cellComponents.add(comp)
         cellsContainer.add(comp)
         cellsContainer.add(Box.createVerticalStrut(8))
@@ -509,6 +546,17 @@ class NotebookPanel(
         SwingUtilities.invokeLater {
             scrollPane.verticalScrollBar.value = scrollPane.verticalScrollBar.maximum
         }
+    }
+
+    fun pinCellOutput(comp: CellComponent) {
+        val idx = cellComponents.indexOf(comp)
+        pinnedOutputPanel.pinCell(comp.cell, if (idx >= 0) idx else 0)
+        rightTabs.isVisible = true
+        rightTabs.selectedIndex = 2
+        pinnedBtn?.isSelected = true
+        mainSplitPane.dividerLocation = (width - 440).coerceAtLeast(100)
+        revalidate()
+        repaint()
     }
 
     fun deleteCell(comp: CellComponent) {

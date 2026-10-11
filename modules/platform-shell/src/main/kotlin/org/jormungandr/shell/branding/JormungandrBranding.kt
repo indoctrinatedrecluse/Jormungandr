@@ -253,8 +253,18 @@ object JormungandrBranding {
      * Brands a specific Window instance (title bar icon, title text, and child UI elements).
      */
     fun brandWindow(win: Window) {
+        val className = win.javaClass.name
+        if (className.contains("Progress") || className.contains("Modal") || className.contains("Saving")) {
+            return
+        }
+        if (com.intellij.openapi.application.ApplicationManager.getApplication()?.isDisposed == true) {
+            return
+        }
         SwingUtilities.invokeLater {
             try {
+                if (com.intellij.openapi.application.ApplicationManager.getApplication()?.isDisposed == true) {
+                    return@invokeLater
+                }
                 // 1. Enforce Jörmungandr multi-resolution window icon on title bar and taskbar
                 val icons = JormungandrIcons.getIconImages()
                 if (icons.isNotEmpty()) {
@@ -266,12 +276,13 @@ object JormungandrBranding {
                     val currentTitle = win.title
                     if (currentTitle != null) {
                         var rebranded = rebrandText(currentTitle)
-                        val license = org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value
-                        val tag = when (license.licenseType) {
+                        val license = runCatching { org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value }.getOrNull()
+                        val tag = when (license?.licenseType) {
                             org.jormungandr.core.license.LicenseType.ADMIN -> " [👑 ADMIN PRIVILEGED]"
                             org.jormungandr.core.license.LicenseType.DEVELOPER -> " [⚡ DEV EDITION]"
                             org.jormungandr.core.license.LicenseType.USER -> " [👤 USER LICENSE]"
                             org.jormungandr.core.license.LicenseType.TRIAL -> " [⏳ TRIAL (${license.trialDaysRemaining}d)]"
+                            null -> ""
                         }
                         if (!rebranded.contains("ADMIN") && !rebranded.contains("DEV") && !rebranded.contains("USER") && !rebranded.contains("TRIAL")) {
                             rebranded += tag

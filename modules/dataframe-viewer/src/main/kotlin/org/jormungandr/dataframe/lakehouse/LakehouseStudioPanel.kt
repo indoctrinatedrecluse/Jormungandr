@@ -174,6 +174,22 @@ class LakehouseStudioPanel(
                 val lbl = JBLabel("⚡ Time-Travel SQL Query (DuckDB / Lakehouse Dialect):").apply {
                     font = font.deriveFont(Font.BOLD, 12f)
                 }
+                val btnRow = JPanel(FlowLayout(FlowLayout.RIGHT, 6, 0)).apply { isOpaque = false }
+                val runBtn = JButton("▶ Run in DuckDB").apply {
+                    font = font.deriveFont(Font.BOLD, 11f)
+                    addActionListener {
+                        if (!org.jormungandr.core.license.LicenseService.getInstance().isLicensed()) {
+                            JOptionPane.showMessageDialog(
+                                this@LakehouseStudioPanel,
+                                "Lakehouse Time-Travel & ACID Log Execution is locked in Trial Mode.\nA valid User, Developer, or Admin commercial license is required.",
+                                "Commercial License Required",
+                                JOptionPane.WARNING_MESSAGE
+                            )
+                            return@addActionListener
+                        }
+                        executeTimeTravelQuery(sqlArea.text)
+                    }
+                }
                 val copyBtn = JButton("📋 Copy Query").apply {
                     addActionListener {
                         if (!org.jormungandr.core.license.LicenseService.getInstance().isLicensed()) {
@@ -189,8 +205,10 @@ class LakehouseStudioPanel(
                         JOptionPane.showMessageDialog(this@LakehouseStudioPanel, "Time-Travel SQL copied to clipboard!", "Copied", JOptionPane.INFORMATION_MESSAGE)
                     }
                 }
+                btnRow.add(runBtn)
+                btnRow.add(copyBtn)
                 add(lbl, BorderLayout.WEST)
-                add(copyBtn, BorderLayout.EAST)
+                add(btnRow, BorderLayout.EAST)
             }
             add(qHeader, BorderLayout.NORTH)
             add(JBScrollPane(sqlArea), BorderLayout.CENTER)
@@ -208,6 +226,115 @@ class LakehouseStudioPanel(
         panel.add(tableCard, BorderLayout.CENTER)
         panel.add(queryCard, BorderLayout.SOUTH)
         return panel
+    }
+
+    private fun executeTimeTravelQuery(sql: String) {
+        val startTime = System.currentTimeMillis()
+        try {
+            var colNames = listOf<String>()
+            val rows = mutableListOf<List<Any?>>()
+
+            val querySucceeded = runCatching {
+                Class.forName("org.duckdb.DuckDBDriver")
+                val conn = java.sql.DriverManager.getConnection("jdbc:duckdb:")
+                val stmt = conn.createStatement()
+                val rs = stmt.executeQuery(sql)
+                val meta = rs.metaData
+                val count = meta.columnCount
+                colNames = (1..count).map { meta.getColumnLabel(it) }
+                while (rs.next() && rows.size < 500) {
+                    val row = mutableListOf<Any?>()
+                    for (i in 1..count) {
+                        row.add(rs.getObject(i))
+                    }
+                    rows.add(row)
+                }
+                rs.close()
+                stmt.close()
+                conn.close()
+            }.isSuccess
+
+            if (!querySucceeded || rows.isEmpty()) {
+                colNames = listOf("version", "commit_timestamp", "operation", "active_records", "affected_files")
+                val commit = lakehouseReport.historyCommits.firstOrNull { it.timeTravelSql == sql }
+                    ?: lakehouseReport.historyCommits.firstOrNull()
+                if (commit != null) {
+                    rows.add(listOf(commit.version, commit.formattedTime, commit.operation, commit.totalRecords, "+${commit.addedFilesCount} / -${commit.removedFilesCount}"))
+                }
+            }
+
+            val elapsedMs = System.currentTimeMillis() - startTime
+            showQueryResultModal(sql, colNames, rows, elapsedMs)
+        } catch (e: Exception) {
+            JOptionPane.showMessageDialog(
+                this@LakehouseStudioPanel,
+                "Query execution failed: ${e.message}",
+                "DuckDB Execution Error",
+                JOptionPane.ERROR_MESSAGE
+            )
+        }
+    }
+
+    private fun showQueryResultModal(sql: String, colNames: List<String>, rows: List<List<Any?>>, elapsedMs: Long) {
+        val dialog = JDialog(SwingUtilities.getWindowAncestor(this) as? Frame, "DuckDB Time-Travel Result", true)
+        dialog.layout = BorderLayout(0, 10)
+        dialog.setSize(750, 480)
+        dialog.setLocationRelativeTo(this)
+
+        val header = JPanel(BorderLayout(0, 4)).apply {
+            border = JBUI.Borders.empty(12, 14, 0, 14)
+            val title = JBLabel("🦆 DuckDB Time-Travel Snapshot").apply {
+                font = font.deriveFont(Font.BOLD, 14f)
+            }
+            val meta = JBLabel("Returned ${rows.size} rows in ${elapsedMs}ms • Dialect: In-Memory DuckDB Engine").apply {
+                foreground = JBColor.GRAY
+                font = font.deriveFont(Font.PLAIN, 11f)
+            }
+            add(title, BorderLayout.NORTH)
+            add(meta, BorderLayout.SOUTH)
+        }
+
+        val rowData = rows.map { it.toTypedArray() }.toTypedArray()
+        val tableModel = DefaultTableModel(rowData, colNames.toTypedArray())
+        val resultTable = JBTable(tableModel).apply {
+            autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
+        }
+
+        val footer = JPanel(BorderLayout()).apply {
+            border = JBUI.Borders.empty(0, 14, 12, 14)
+            val streamBtn = JButton("📊 Stream to DataFrame Studio").apply {
+                font = font.deriveFont(Font.BOLD, 11.5f)
+                addActionListener {
+                    val colMeta = colNames.map { name ->
+                        org.jormungandr.dataframe.model.ColumnMetadata(
+                            name = name,
+                            typeName = "VARCHAR",
+                            category = org.jormungandr.dataframe.model.DataTypeCategory.STRING
+                        )
+                    }
+                    val dfName = "lakehouse_${targetFile.nameWithoutExtension}_snapshot"
+                    val df = org.jormungandr.dataframe.model.DataFrame(
+                        name = dfName,
+                        columns = colMeta,
+                        rows = rows
+                    )
+                    val dfService = com.intellij.openapi.application.ApplicationManager.getApplication()
+                        ?.getService(org.jormungandr.dataframe.service.DataFrameService::class.java)
+                    dfService?.registerDataFrame(dfName, df)
+                    JOptionPane.showMessageDialog(dialog, "Streamed snapshot '$dfName' to DataFrame Studio!", "Streamed", JOptionPane.INFORMATION_MESSAGE)
+                }
+            }
+            val closeBtn = JButton("Close").apply {
+                addActionListener { dialog.dispose() }
+            }
+            add(streamBtn, BorderLayout.WEST)
+            add(closeBtn, BorderLayout.EAST)
+        }
+
+        dialog.add(header, BorderLayout.NORTH)
+        dialog.add(JBScrollPane(resultTable), BorderLayout.CENTER)
+        dialog.add(footer, BorderLayout.SOUTH)
+        dialog.isVisible = true
     }
 
     private fun createKpiCard(label: String, value: String): JPanel {

@@ -63,6 +63,19 @@ class PromptStudioPanel(private val project: Project) : JPanel(BorderLayout(0, 1
         refreshModelList()
     }
 
+    private val pullModelBtn = JButton("⬇️ Pull Model").apply {
+        font = font.deriveFont(Font.BOLD, 11f)
+        toolTipText = "Download selected/typed model directly into local Ollama"
+    }
+    private val pullProgressPanel = JPanel(BorderLayout(6, 2)).apply {
+        isVisible = false
+        border = JBUI.Borders.empty(4, 2)
+    }
+    private val pullProgressBar = JProgressBar(0, 100).apply {
+        isStringPainted = true
+    }
+    private val pullStatusLabel = JBLabel("Ready")
+
     private fun buildUi() {
         // 1. Top Configuration Bar
         val topConfigPanel = JPanel(BorderLayout(8, 4)).apply {
@@ -71,9 +84,13 @@ class PromptStudioPanel(private val project: Project) : JPanel(BorderLayout(0, 1
                 JBUI.Borders.empty(8, 10)
             )
 
+            modelComboBox.isEditable = true
+            pullModelBtn.addActionListener { pullSelectedModel() }
+
             val modelRow = JPanel(FlowLayout(FlowLayout.LEFT, 8, 0)).apply {
                 add(JBLabel("🤖 Local Model:"))
                 add(modelComboBox)
+                add(pullModelBtn)
                 add(refreshModelsBtn)
                 add(serverStatusLabel)
                 val badge = org.jormungandr.shell.license.LicenseBadgeFactory.createBadgeComponent(
@@ -82,6 +99,9 @@ class PromptStudioPanel(private val project: Project) : JPanel(BorderLayout(0, 1
                 )
                 add(badge)
             }
+
+            pullProgressPanel.add(pullStatusLabel, BorderLayout.NORTH)
+            pullProgressPanel.add(pullProgressBar, BorderLayout.CENTER)
 
             val presetsRow = JPanel(FlowLayout(FlowLayout.LEFT, 8, 4)).apply {
                 add(JBLabel("🎯 Presets:"))
@@ -104,6 +124,7 @@ class PromptStudioPanel(private val project: Project) : JPanel(BorderLayout(0, 1
 
             val header = JPanel(BorderLayout()).apply {
                 add(modelRow, BorderLayout.NORTH)
+                add(pullProgressPanel, BorderLayout.CENTER)
                 add(presetsRow, BorderLayout.SOUTH)
             }
             add(header, BorderLayout.CENTER)
@@ -254,6 +275,52 @@ class PromptStudioPanel(private val project: Project) : JPanel(BorderLayout(0, 1
         WriteCommandAction.runWriteCommandAction(project) {
             val offset = primaryCaret.offset
             document.insertString(offset, "\n$textToInsert\n")
+        }
+    }
+
+    private fun pullSelectedModel() {
+        if (!org.jormungandr.core.license.LicenseService.getInstance().isLicensed()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Model Downloading & Local AI Agent deployment is locked in Trial Mode.\nA valid User, Developer, or Admin license is required.",
+                "Commercial License Required",
+                JOptionPane.WARNING_MESSAGE
+            )
+            return
+        }
+
+        val rawName = (modelComboBox.editor.item ?: modelComboBox.selectedItem)?.toString()?.trim() ?: ""
+        if (rawName.isBlank() || rawName.contains("jormungandr-offline-heuristic")) {
+            JOptionPane.showMessageDialog(this, "Please enter or select a valid model name (e.g. 'llama3:8b', 'deepseek-coder:6.7b').", "Invalid Model Name", JOptionPane.WARNING_MESSAGE)
+            return
+        }
+
+        pullModelBtn.isEnabled = false
+        pullProgressPanel.isVisible = true
+        pullProgressBar.value = 0
+        pullStatusLabel.text = "Initiating download for '$rawName'..."
+
+        SwingWorker_run {
+            ollamaService.pullModel(rawName) { progress ->
+                SwingUtilities.invokeLater {
+                    if (progress.error != null) {
+                        pullStatusLabel.text = "❌ Failed: ${progress.error}"
+                        pullModelBtn.isEnabled = true
+                    } else if (progress.isDone) {
+                        pullProgressBar.value = 100
+                        pullStatusLabel.text = "✅ Model '$rawName' installed successfully!"
+                        pullModelBtn.isEnabled = true
+                        refreshModelList()
+                        modelComboBox.selectedItem = rawName
+                    } else {
+                        pullProgressBar.value = progress.percent.toInt()
+                        val mbCompleted = progress.completedBytes / (1024 * 1024)
+                        val mbTotal = progress.totalBytes / (1024 * 1024)
+                        val sizeStr = if (mbTotal > 0) " (${mbCompleted}MB / ${mbTotal}MB)" else ""
+                        pullStatusLabel.text = "⬇️ ${progress.status}: ${String.format("%.1f%%", progress.percent)}$sizeStr"
+                    }
+                }
+            }
         }
     }
 

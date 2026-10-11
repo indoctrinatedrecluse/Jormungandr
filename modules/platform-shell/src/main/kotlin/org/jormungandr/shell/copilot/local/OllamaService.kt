@@ -25,6 +25,15 @@ data class LlmGenerationResult(
     val modelUsed: String
 )
 
+data class ModelPullProgress(
+    val status: String,
+    val completedBytes: Long = 0,
+    val totalBytes: Long = 0,
+    val percent: Double = 0.0,
+    val isDone: Boolean = false,
+    val error: String? = null
+)
+
 /**
  * Service managing local LLM communication (Ollama / vLLM / llama.cpp / Heuristic offline fallback).
  */
@@ -265,6 +274,61 @@ class OllamaService {
             .replace("\\t", "\t")
             .replace("\\\"", "\"")
             .replace("\\\\", "\\")
+    }
+
+    fun pullModel(modelName: String, onProgress: (ModelPullProgress) -> Unit) {
+        if (!isServerReachable()) {
+            onProgress(ModelPullProgress(status = "Error", error = "Local Ollama daemon not reachable at $endpointUrl", isDone = true))
+            return
+        }
+
+        try {
+            val url = URI("$endpointUrl/api/pull").toURL()
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                connectTimeout = 5000
+                readTimeout = 600000 // 10 minutes for download
+            }
+
+            val payload = "{\"name\":\"$modelName\",\"stream\":true}"
+            OutputStreamWriter(conn.outputStream, StandardCharsets.UTF_8).use { it.write(payload) }
+
+            if (conn.responseCode != 200) {
+                val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: "HTTP ${conn.responseCode}"
+                onProgress(ModelPullProgress(status = "Failed", error = err, isDone = true))
+                return
+            }
+
+            val reader = BufferedReader(InputStreamReader(conn.inputStream, StandardCharsets.UTF_8))
+            var line: String?
+            while (reader.readLine().also { line = it } != null) {
+                val text = line ?: continue
+                if (text.isBlank()) continue
+
+                val statusMatch = Regex("\"status\"\\s*:\\s*\"([^\"]+)\"").find(text)?.groupValues?.get(1) ?: "downloading"
+                val totalMatch = Regex("\"total\"\\s*:\\s*([0-9]+)").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+                val completedMatch = Regex("\"completed\"\\s*:\\s*([0-9]+)").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+
+                val pct = if (totalMatch > 0) (completedMatch.toDouble() / totalMatch * 100.0) else 0.0
+                val done = statusMatch.equals("success", ignoreCase = true)
+
+                onProgress(ModelPullProgress(
+                    status = statusMatch,
+                    completedBytes = completedMatch,
+                    totalBytes = totalMatch,
+                    percent = pct,
+                    isDone = done
+                ))
+
+                if (done) break
+            }
+            reader.close()
+            onProgress(ModelPullProgress(status = "success", percent = 100.0, isDone = true))
+        } catch (e: Exception) {
+            onProgress(ModelPullProgress(status = "Error", error = e.message ?: "Download failed", isDone = true))
+        }
     }
 
     companion object {

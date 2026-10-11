@@ -39,8 +39,63 @@ class GpuMonitorDialog(project: Project?) : DialogWrapper(project) {
         font = font.deriveFont(Font.BOLD, 12f)
     }
 
+    private val sparklinePanel = object : JPanel() {
+        init {
+            preferredSize = Dimension(520, 90)
+            background = JBColor(Color(248, 250, 252), Color(15, 23, 42))
+            border = BorderFactory.createLineBorder(JBColor.border(), 1, true)
+        }
+
+        override fun paintComponent(g: Graphics) {
+            super.paintComponent(g)
+            val g2 = g as? Graphics2D ?: return
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+            val history = telemetryService.getTelemetryHistory()
+            val w = width - 16
+            val h = height - 16
+            val originX = 8
+            val originY = 8
+
+            // Draw grid lines (0%, 50%, 100%)
+            g2.color = JBColor(Color(226, 232, 240, 160), Color(51, 65, 85, 120))
+            g2.drawLine(originX, originY + h / 2, originX + w, originY + h / 2)
+            g2.drawLine(originX, originY, originX + w, originY)
+            g2.drawLine(originX, originY + h, originX + w, originY + h)
+
+            if (history.size < 2) return
+
+            val stepX = w.toDouble() / (history.size - 1).coerceAtLeast(1)
+
+            // 1. Draw GPU Compute % (Cyan)
+            g2.color = Color(56, 189, 248)
+            g2.stroke = BasicStroke(2.0f)
+            val computePath = java.awt.geom.Path2D.Double()
+            history.forEachIndexed { idx, s ->
+                val px = originX + idx * stepX
+                val py = originY + h - (s.gpuComputePercent.coerceIn(0, 100).toDouble() / 100.0 * h)
+                if (idx == 0) computePath.moveTo(px, py) else computePath.lineTo(px, py)
+            }
+            g2.draw(computePath)
+
+            // 2. Draw VRAM Used % (Fuchsia)
+            g2.color = Color(217, 70, 239)
+            g2.stroke = BasicStroke(2.0f)
+            val vramPath = java.awt.geom.Path2D.Double()
+            history.forEachIndexed { idx, s ->
+                val px = originX + idx * stepX
+                val py = originY + h - (s.vramUsagePercent.coerceIn(0.0, 100.0) / 100.0 * h)
+                if (idx == 0) vramPath.moveTo(px, py) else vramPath.lineTo(px, py)
+            }
+            g2.draw(vramPath)
+        }
+    }
+
     private val listener = HardwareTelemetryListener { snapshot ->
-        SwingUtilities.invokeLater { updateUi(snapshot) }
+        SwingUtilities.invokeLater { 
+            updateUi(snapshot)
+            sparklinePanel.repaint()
+        }
     }
 
     init {
@@ -94,9 +149,41 @@ class GpuMonitorDialog(project: Project?) : DialogWrapper(project) {
             add(tempLabel, BorderLayout.EAST)
         }
         metricsPanel.add(tempCard)
+        metricsPanel.add(Box.createVerticalStrut(10))
+
+        // 5. 60-Second Real-Time Scrolling Sparkline
+        val sparklineCard = JPanel(BorderLayout(0, 4)).apply {
+            border = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(JBColor.border(), 1, true),
+                JBUI.Borders.empty(8, 10)
+            )
+            val sHeader = JPanel(BorderLayout()).apply {
+                val t = JBLabel("📈 Live 60s Telemetry History").apply { font = font.deriveFont(Font.BOLD, 11.5f) }
+                val legend = JBLabel("● GPU Compute (Cyan)  ● VRAM (Fuchsia)").apply {
+                    font = font.deriveFont(Font.BOLD, 10f)
+                    foreground = JBColor.GRAY
+                }
+                add(t, BorderLayout.WEST)
+                add(legend, BorderLayout.EAST)
+            }
+            add(sHeader, BorderLayout.NORTH)
+            add(sparklinePanel, BorderLayout.CENTER)
+        }
+        metricsPanel.add(sparklineCard)
 
         // Bottom Actions
         val actionPanel = JPanel(FlowLayout(FlowLayout.RIGHT, 8, 0)).apply {
+            val exportCsvBtn = JButton("📋 Export Telemetry CSV").apply {
+                addActionListener {
+                    val history = telemetryService.getTelemetryHistory()
+                    val sb = StringBuilder("timestamp_ms,gpu_name,gpu_compute_pct,vram_used_mb,vram_total_mb,vram_pct,ram_used_mb,ram_total_mb,temp_c\n")
+                    history.forEach { s ->
+                        sb.append("${s.timestampMs},\"${s.gpuName}\",${s.gpuComputePercent},${s.vramUsedMb},${s.vramTotalMb},${String.format("%.2f", s.vramUsagePercent)},${s.systemRamUsedMb},${s.systemRamTotalMb},${s.gpuTemperatureCelsius}\n")
+                    }
+                    java.awt.Toolkit.getDefaultToolkit().systemClipboard.setContents(java.awt.datatransfer.StringSelection(sb.toString()), null)
+                    JOptionPane.showMessageDialog(contentPanel, "Exported ${history.size} historical telemetry records to clipboard as CSV!", "CSV Exported", JOptionPane.INFORMATION_MESSAGE)
+                }
+            }
             val trimBtn = JButton("🧹 Trim Off-Heap & Run JVM GC").apply {
                 addActionListener {
                     System.gc()
@@ -108,9 +195,11 @@ class GpuMonitorDialog(project: Project?) : DialogWrapper(project) {
                     )
                 }
             }
+            add(exportCsvBtn)
             add(trimBtn)
         }
 
+        contentPanel.preferredSize = Dimension(580, 560)
         contentPanel.add(topPanel, BorderLayout.NORTH)
         contentPanel.add(metricsPanel, BorderLayout.CENTER)
         contentPanel.add(actionPanel, BorderLayout.SOUTH)

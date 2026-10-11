@@ -87,7 +87,17 @@ class PipelineStudioPanel(private val project: Project) : JPanel(BorderLayout())
         val scanBtn = JButton("🔄 Scan Lineage").apply {
             addActionListener { scanLineage() }
         }
-        val searchField = JBTextField(14).apply {
+        val simulateBtn = JButton("▶️ Simulate Run").apply {
+            font = font.deriveFont(Font.BOLD, 11f)
+            toolTipText = "Simulate step-by-step pipeline execution in topological dependency order"
+            addActionListener { simulateFullPipelineRun() }
+        }
+        val resetSimBtn = JButton("🔄 Reset").apply {
+            font = font.deriveFont(11f)
+            toolTipText = "Reset all nodes to IDLE"
+            addActionListener { resetSimulation() }
+        }
+        val searchField = JBTextField(12).apply {
             emptyText.text = "Search models & tasks..."
             document.addDocumentListener(object : DocumentListener {
                 override fun insertUpdate(e: DocumentEvent?) = canvas.setFilter(text)
@@ -96,6 +106,8 @@ class PipelineStudioPanel(private val project: Project) : JPanel(BorderLayout())
             })
         }
         leftControls.add(scanBtn)
+        leftControls.add(simulateBtn)
+        leftControls.add(resetSimBtn)
         leftControls.add(JBLabel("🔍"))
         leftControls.add(searchField)
 
@@ -310,5 +322,68 @@ class PipelineStudioPanel(private val project: Project) : JPanel(BorderLayout())
                 updateInspector(null)
             }
         }
+    }
+
+    fun simulateFullPipelineRun() {
+        if (!org.jormungandr.core.license.LicenseService.getInstance().isLicensed()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Pipeline Execution Simulation is locked in Trial Mode.\nA valid User, Developer, or Admin license is required.",
+                "Commercial License Required",
+                JOptionPane.WARNING_MESSAGE
+            )
+            return
+        }
+
+        val maxLayer = currentGraph.nodes.values.maxOfOrNull { it.layer } ?: 0
+        ApplicationManager.getApplication().executeOnPooledThread {
+            SwingUtilities.invokeLater {
+                currentGraph.nodes.values.forEach { it.status = PipelineExecutionStatus.QUEUED }
+                canvas.repaint()
+                statsLabel.text = "Pipeline Simulation: Queued ${currentGraph.nodes.size} nodes across ${maxLayer + 1} layers..."
+            }
+
+            Thread.sleep(350)
+
+            for (layer in 0..maxLayer) {
+                val layerNodes = currentGraph.nodes.values.filter { it.layer == layer }
+                if (layerNodes.isEmpty()) continue
+
+                SwingUtilities.invokeLater {
+                    layerNodes.forEach { it.status = PipelineExecutionStatus.RUNNING }
+                    canvas.repaint()
+                    statsLabel.text = "Pipeline Simulation: Layer $layer running (${layerNodes.map { it.name }.joinToString(", ")})..."
+                    selectedNode?.let { updateInspector(it) }
+                }
+
+                Thread.sleep(650)
+
+                SwingUtilities.invokeLater {
+                    layerNodes.forEach { it.status = PipelineExecutionStatus.SUCCESS }
+                    canvas.repaint()
+                    statsLabel.text = "Pipeline Simulation: Layer $layer succeeded (${layerNodes.size} models/tasks)."
+                    selectedNode?.let { updateInspector(it) }
+                }
+
+                Thread.sleep(250)
+            }
+
+            SwingUtilities.invokeLater {
+                statsLabel.text = "✅ Pipeline Run Simulation completed: ${currentGraph.nodes.size} tasks succeeded across ${maxLayer + 1} layers!"
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Pipeline execution simulation completed successfully!\nAll ${currentGraph.nodes.size} nodes executed in topological dependency order.",
+                    "Pipeline Simulation Succeeded",
+                    JOptionPane.INFORMATION_MESSAGE
+                )
+            }
+        }
+    }
+
+    fun resetSimulation() {
+        currentGraph.nodes.values.forEach { it.status = PipelineExecutionStatus.IDLE }
+        canvas.repaint()
+        statsLabel.text = "Lineage DAG: ${currentGraph.nodes.size} nodes | ${currentGraph.edges.size} dependencies | Status reset to IDLE"
+        selectedNode?.let { updateInspector(it) }
     }
 }

@@ -625,47 +625,55 @@ A centralized, high-fidelity gallery and canvas for all figures, charts, and vis
 Official binaries and extension packages are published on [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest). Choose the distribution format that fits your workflow:
 
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        JÖRMUNGANDR RELEASES                            │
-│                                                                        │
-│   🧰 Standalone Portable IDE          🧩 Modular Extension Bundle       │
-│   • Ready-to-run desktop IDE          • For existing IntelliJ / PyCharm│
-│   • Bundled JBR 21 LTS runtime        • Installs via Settings -> Plugins│
-│   • All 4 extensions pre-installed    • ~77 MB lightweight download    │
-│   • Double-click Jormungandr.bat      • Zero external IDE changes      │
-└────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 JÖRMUNGANDR RELEASES                                     │
+│                                                                                          │
+│   💿 Turnkey Windows Installer        🧰 Standalone Portable Zip     🧩 Modular Plugins  │
+│   • One-click setup executable        • Zero-install portable IDE    • For IntelliJ/     │
+│   • Desktop & Start Menu shortcuts    • Bundled JBR 21 LTS runtime     PyCharm           │
+│   • Native .ipynb/.parquet associate  • Double-click Jormungandr.bat • Settings->Plugins │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Option A: Standalone Portable IDE (`Jormungandr-v1.0.0-windows-x64.zip`)
+#### Option A: Turnkey Windows Installer (`Jormungandr-Setup-v1.1.0-x64.exe`)
+*Recommended for Windows users who want a native, seamless installation experience with Start Menu shortcuts, desktop launcher, and file associations.*
+
+1. **Download**: Download `Jormungandr-Setup-v1.1.0-x64.exe` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+2. **Run Installer**: Execute the installer and follow the guided setup wizard.
+3. **Launch**: Open Jörmungandr from your Desktop shortcut or Start Menu.
+
+---
+
+#### Option B: Standalone Portable IDE (`Jormungandr-v1.1.0-windows-x64.zip`)
 *Best for users who want an instant, dedicated data science and machine learning IDE without needing an existing IntelliJ, PyCharm, or Java installation.*
 
-1. **Download**: Download `Jormungandr-v1.0.0-windows-x64.zip` from the [Latest Release](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+1. **Download**: Download `Jormungandr-v1.1.0-windows-x64.zip` from the [Latest Release](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 2. **Extract**: Unzip the archive to any directory on your filesystem (e.g. `C:\Tools\Jormungandr` or `D:\Jormungandr`).
 3. **Launch**: Double-click **`Jormungandr.bat`** (or execute `bin\idea64.exe`).
    - The standalone portable IDE comes completely self-contained with the transformed IntelliJ Platform CE base, bundled Java 21 LTS JetBrains Runtime (JBR), and all Jörmungandr core extensions pre-configured.
 
 ---
 
-#### Option B: Modular Extension Bundle (`Jormungandr-Plugin-v1.0.0.zip`)
+#### Option C: Modular Extension Bundle (`Jormungandr-Plugin-v1.1.0.zip`)
 *Best for users who already have an existing IntelliJ Platform IDE installed (such as IntelliJ IDEA Community/Ultimate, PyCharm Community/Professional, or DataGrip) and want to integrate Jörmungandr's full analytics, notebook, and machine learning capabilities into their current environment.*
 
 ##### ⚙️ Method 1: Graphical Install via IDE UI (Recommended & Easiest)
 > [!TIP]
 > **Do NOT unzip the archive.** The IntelliJ Platform installer reads the `.zip` package directly.
 
-1. **Download**: Download `Jormungandr-Plugin-v1.0.0.zip` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+1. **Download**: Download `Jormungandr-Plugin-v1.1.0.zip` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 2. **Open Settings**: In your existing IDE, open the Settings / Preferences dialog:
    - **Windows / Linux**: `File` &rarr; `Settings...` (Shortcut: `Ctrl + Alt + S`)
    - **macOS**: `IntelliJ IDEA` / `PyCharm` &rarr; `Settings...` (Shortcut: `Cmd + ,`)
 3. **Navigate to Plugins**: Select **Plugins** in the left-hand category tree.
 4. **Install from Disk**: Click the **⚙️ (Gear Icon)** located at the top-right of the Plugins panel, and click **`Install Plugin from Disk...`**.
-5. **Select Archive**: Navigate to where you downloaded `Jormungandr-Plugin-v1.0.0.zip`, select it, and click **OK**.
+5. **Select Archive**: Navigate to where you downloaded `Jormungandr-Plugin-v1.1.0.zip`, select it, and click **OK**.
 6. **Restart IDE**: Click **Restart IDE** when prompted. Upon restart, the Jörmungandr subsystems (`Platform Shell`, `Jupyter Integration`, `DataFrame Viewer`, and `Database Suite`) will be activated and accessible in your activity bar and tool window stripes.
 
 ##### 📂 Method 2: Manual Directory Extraction & Placement
 If you are operating in an offline/air-gapped environment or provisioning developer workstations via automation scripts:
 
-1. **Extract**: Unzip `Jormungandr-Plugin-v1.0.0.zip`. The archive contains the 4 modular subsystem directories:
+1. **Extract**: Unzip `Jormungandr-Plugin-v1.1.0.zip`. The archive contains the 4 modular subsystem directories:
    - `platform-shell/` (Core perspective engine, branding, registry, and memory monitor)
    - `jupyter-integration/` (Reactive notebook editor, ZeroMQ client, and 2D AST DAG canvas)
    - `dataframe-viewer/` (Tabular grid, ML training studio, SHAP/PDP explainability, and drift studio)
@@ -1046,9 +1054,37 @@ To ensure 100% reliability, the Python kernel bootstrap (`bootstrapKernel` in `Z
 ### 🎁 11.12 Bundled Showcase Workspace & First-Launch Experience
 
 To provide an immediate, zero-friction onboarding experience:
-1. **Pre-Bundled Samples Directory**: The standalone portable release (`Jormungandr-v1.0.0-windows-x64.zip`) ships with the entire `samples/` directory pre-bundled within the distribution root.
+1. **Pre-Bundled Samples Directory**: The standalone portable release (`Jormungandr-v1.1.0-windows-x64.zip`) ships with the entire `samples/` directory pre-bundled within the distribution root.
 2. **First-Launch Default Project**: If the IDE is launched for the first time without an active project or recent project history, Jörmungandr automatically opens and anchors `samples/` as the initial workspace, welcoming users with ready-to-run notebooks, datasets, and pipeline models.
 3. **Automatic Context & State Restoration**: Once a user opens or creates their own project, the standard IntelliJ Platform workspace persistence takes over—preserving active files, editor tabs, cursor positions, and window docking states across IDE restarts.
+
+---
+
+### 🚀 11.13 Version 1.1.0 Feature Innovations & Performance Hardening
+
+The **v1.1.0** release delivers major engineering enhancements across the analytical stack:
+
+1. **Lakehouse Studio — In-Place Time-Travel Execution**:
+   - Integrated **"▶ Run in DuckDB"** action in Lakehouse Studio.
+   - Live query execution modal with tabular result preview and **"📊 Stream to DataFrame Studio"** bridge.
+2. **Pipeline Studio — Live Task Telemetry & Execution Simulation**:
+   - Animated electric-blue pulsing glow effect on active/running pipeline lineage nodes.
+   - Layer-by-layer topological DAG simulation with animated execution states and telemetry badges.
+3. **Local AI Prompt Studio — 1-Click Model Pulling**:
+   - One-click model acquisition from Ollama registry with streaming progress bar (`POST /api/pull`).
+   - Real-time download status, digest verification, and auto-refresh of available local models.
+4. **Hardware Telemetry — 60-Second Sparkline & Experiment Profiling**:
+   - Real-time dual-curve strip chart canvas (cyan compute, fuchsia VRAM) with 60-second historical buffer.
+   - One-click CSV export and automatic GPU/VRAM hardware profiling attached to ML Experiment Tracker runs.
+5. **Turnkey Windows Installer**:
+   - Production single-file setup executable (`Jormungandr-Setup-v1.1.0-x64.exe`) built with Inno Setup.
+   - Native Windows desktop shortcuts, Start Menu integration, and `.ipynb` / `.parquet` file associations.
+6. **Reactive Notebooks — Pin Output & Split View**:
+   - **"📌 Pin Output to Side Panel"** action docked in cell action menus.
+   - Dedicated side panel tab maintaining reactive split-view synchronization with executing cells.
+7. **IDE Lifecycle & Shutdown Hardening**:
+   - Completely resolved application shutdown freeze in "Saving Settings" dialog.
+   - Non-blocking session teardown with 500ms socket timeouts, linger=0, and clean background process disposal.
 
 ---
 

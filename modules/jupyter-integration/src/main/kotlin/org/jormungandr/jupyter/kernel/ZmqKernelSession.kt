@@ -149,20 +149,35 @@ class ZmqKernelSession(
             val ctx = ZContext()
             zContext = ctx
 
-            val shell = ctx.createSocket(SocketType.DEALER)
+            val shell = ctx.createSocket(SocketType.DEALER).apply {
+                receiveTimeOut = 500
+                sendTimeOut = 500
+                linger = 0
+            }
             shell.connect("tcp://127.0.0.1:$shellPort")
             shellSocket = shell
 
-            val iopub = ctx.createSocket(SocketType.SUB)
+            val iopub = ctx.createSocket(SocketType.SUB).apply {
+                receiveTimeOut = 500
+                linger = 0
+            }
             iopub.connect("tcp://127.0.0.1:$iopubPort")
             iopub.subscribe("") // Subscribe to all topics
             iopubSocket = iopub
 
-            val control = ctx.createSocket(SocketType.DEALER)
+            val control = ctx.createSocket(SocketType.DEALER).apply {
+                receiveTimeOut = 500
+                sendTimeOut = 500
+                linger = 0
+            }
             control.connect("tcp://127.0.0.1:$controlPort")
             controlSocket = control
 
-            val hb = ctx.createSocket(SocketType.REQ)
+            val hb = ctx.createSocket(SocketType.REQ).apply {
+                receiveTimeOut = 500
+                sendTimeOut = 500
+                linger = 0
+            }
             hb.connect("tcp://127.0.0.1:$hbPort")
             hbSocket = hb
 
@@ -266,6 +281,8 @@ class ZmqKernelSession(
 
     override suspend fun shutdown() = withContext(Dispatchers.IO) {
         _status.value = KernelStatus.DISCONNECTED
+        sessionScope.cancel()
+
         runCatching {
             val ctrl = controlSocket
             if (ctrl != null) {
@@ -281,18 +298,24 @@ class ZmqKernelSession(
                 sendMessage(ctrl, header, content)
             }
         }
-        runCatching { zContext?.close() }
-        zContext = null
+
+        kernelProcess?.destroyForcibly()
+        kernelProcess = null
+
+        runCatching { shellSocket?.close() }
+        runCatching { iopubSocket?.close() }
+        runCatching { controlSocket?.close() }
+        runCatching { hbSocket?.close() }
         shellSocket = null
         iopubSocket = null
         controlSocket = null
         hbSocket = null
 
-        kernelProcess?.destroyForcibly()
-        kernelProcess = null
+        runCatching { zContext?.close() }
+        zContext = null
+
         connectionFile?.delete()
         connectionFile = null
-        sessionScope.cancel()
     }
 
     private fun startIopubListener(iopub: ZMQ.Socket) {
