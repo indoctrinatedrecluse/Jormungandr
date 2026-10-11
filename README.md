@@ -987,11 +987,11 @@ Jörmungandr includes an enterprise-grade commercial licensing and extension gat
 
 ### 🧪 11.10 Ready-Made Testing & Evaluation Suite (`samples/`)
 
-To facilitate thorough manual testing and feature verification across all modular extensions and flagship studios, the project includes a dedicated `samples/` directory with ready-to-run test artifacts:
+To facilitate thorough manual testing and feature verification across all modular extensions and flagship studios, the project includes a dedicated `samples/` directory with ready-to-run test artifacts and flagship showcase notebooks:
 
 | Category | Location | Featured Capabilities & Verification Targets |
 | :--- | :--- | :--- |
-| **🪐 Reactive Notebooks** | `samples/01_notebooks/` | • `01_reactive_dag_demo.ipynb`: Inter-cell defs/uses dependency mapping, `⚠️ Stale` badges, and Kahn's topological re-execution.<br>• `02_rich_outputs_and_math.ipynb`: LaTeX formula typography ($E=mc^2$), interactive collapsible JSON trees, and styled HTML tables.<br>• `03_audio_video_multimedia.ipynb`: Native Java Sound audio waveform player cards and video player launcher.<br>• `04_data_science_workflow.ipynb`: End-to-end Pandas, DuckDB in-memory SQL execution, and statistical outlier telemetry. |
+| **🪐 Reactive Notebooks & Flagship Showcases** | `samples/01_notebooks/` | • `01_reactive_dag_demo.ipynb`: Inter-cell defs/uses dependency mapping, `⚠️ Stale` badges, and Kahn's topological re-execution.<br>• `02_rich_outputs_and_math.ipynb`: LaTeX formula typography ($E=mc^2$), interactive collapsible JSON trees, and styled HTML tables.<br>• `03_audio_video_multimedia.ipynb`: Native Java Sound audio waveform player cards and video player launcher.<br>• `04_data_science_workflow.ipynb`: End-to-end Pandas, DuckDB in-memory SQL execution, and statistical outlier telemetry.<br>• `05_lakehouse_and_pipeline_showcase.ipynb`: Delta Lake ACID commit log dissection, in-memory DuckDB aggregations, programmatic Lakehouse Inspector launch, and interactive 2D Pipeline Lineage DAG visualizer.<br>• `06_ai_ml_and_gpu_showcase.ipynb`: Binary `.safetensors` zero-copy header dissection, interactive Neural Checkpoint Inspector launch, real-time GPU/VRAM hardware telemetry monitor, and Local AI & Prompt Engineering Studio launch. |
 | **📊 Datasets & Drift** | `samples/02_datasets/` | • `customers.csv`: 250-row dataset for Data Quality Scorecards and Pearson/Spearman/Kendall correlation matrices.<br>• `financial_transactions.csv`: 500 rows for high-frequency window function analytics.<br>• `sensor_telemetry.json`: 150 streaming IoT packets for real-time Oscilloscope and memory buffer testing.<br>• `reference_train.csv` & `current_production.csv`: Two-dataset statistical drift pair for testing the **Population Stability Index (PSI)** and **Kolmogorov-Smirnov (K-S)** drift engine. |
 | **🗄️ Lakehouse & SQL** | `samples/03_lakehouse_and_sql/` | • `duckdb_lakehouse_queries.sql`: Zero-copy analytical SQL queries over local CSV/Parquet files without external servers.<br>• `postgres_mysql_schema.sql`: Cross-dialect relational schemas and seed data.<br>• `mock_delta_table/`: Authentic Delta Lake ACID table with multi-commit `_delta_log/` transaction logs (`CREATE`, `OPTIMIZE`, `MERGE`) testing the Lakehouse Studio ACID timeline and 1-Click Time-Travel SQL Generator. |
 | **🔄 Pipelines & DAGs** | `samples/04_pipeline_orchestration/` | • `dbt_analytics_project/`: Full dbt project (`dbt_project.yml`, staging views, marts tables) with `{{ ref(...) }}` and `{{ source(...) }}` lineage.<br>• `airflow_dags/customer_etl_dag.py`: Apache Airflow DAG testing cubic-bezier 2D dependency rendering and task execution simulation. |
@@ -999,6 +999,56 @@ To facilitate thorough manual testing and feature verification across all modula
 | **🔮 R Statistical REPL** | `samples/06_r_statistical/` | • `ggplot2_statistical_analysis.R`: Cohort observational analysis testing R REPL console interaction, CRAN package discovery, and automated `ggplot2` plot interception into the Scientific Plot Viewer. |
 
 > Detailed instructions on exercising each sample are documented in [`samples/README.md`](file:///D:/Projects/Jörmungandr/samples/README.md).
+
+### ⚡ 11.11 Programmatic IDE Action Bridge (`import jormungandr as jm`)
+
+Jörmungandr introduces a high-level programmatic Python bridge that connects notebook and Python script executions directly with the native IntelliJ desktop IDE user interface. Any cell can programmatically open, focus, or interact with IDE tool windows, dialogs, and visualizers without requiring manual mouse navigation:
+
+```python
+import jormungandr as jm
+
+# 1. Stream active Pandas / Polars DataFrame into the virtualized Data Grid
+jm.show_dataframe(df, title="Customer Directory")
+
+# 2. Inspect Parquet / Delta Lake columnar block chunks & ACID commits
+jm.show_lakehouse("samples/03_lakehouse_and_sql/mock_delta_table")
+
+# 3. Open interactive cubic-bezier Pipeline Lineage DAG visualizer
+jm.show_pipeline_lineage("lakehouse_customer_hourly_sync")
+
+# 4. Open Multi-Dialect SQL Console in Database Studio
+jm.show_database_studio(connection="DuckDB In-Memory Mart", query="SELECT * FROM df")
+
+# 5. Zero-copy Safetensors / GGUF neural graph inspector
+jm.show_model_inspector("samples/05_machine_learning/resnet50_sample.safetensors")
+
+# 6. Real-time GPU & VRAM telemetry monitor
+jm.show_gpu_monitor()
+
+# 7. Local AI & Prompt Engineering Playground
+jm.show_prompt_studio(model="llama-3-8b-instruct", system_prompt="You are an expert AI data scientist.")
+
+# 8. Reactive Execution DAG canvas & cell dependency tracker
+jm.show_dag()
+
+# 9. Centralized Scientific Plot Viewer gallery
+jm.show_plots()
+
+# 10. Interactive R Statistical REPL Console
+jm.show_r_console()
+```
+
+#### 🛡️ Zero-Config Kernel Pre-Registration
+To ensure 100% reliability, the Python kernel bootstrap (`bootstrapKernel` in `ZmqKernelSession` and `SubprocessPythonSession`) pre-registers the `jormungandr` module into `sys.modules` and injects `jm` into `builtins` upon session startup. This eliminates `ModuleNotFoundError` completely, even when running standalone scripts, custom virtual environments, or clean notebooks without manual pip installation.
+
+---
+
+### 🎁 11.12 Bundled Showcase Workspace & First-Launch Experience
+
+To provide an immediate, zero-friction onboarding experience:
+1. **Pre-Bundled Samples Directory**: The standalone portable release (`Jormungandr-v1.0.0-windows-x64.zip`) ships with the entire `samples/` directory pre-bundled within the distribution root.
+2. **First-Launch Default Project**: If the IDE is launched for the first time without an active project or recent project history, Jörmungandr automatically opens and anchors `samples/` as the initial workspace, welcoming users with ready-to-run notebooks, datasets, and pipeline models.
+3. **Automatic Context & State Restoration**: Once a user opens or creates their own project, the standard IntelliJ Platform workspace persistence takes over—preserving active files, editor tabs, cursor positions, and window docking states across IDE restarts.
 
 ---
 
