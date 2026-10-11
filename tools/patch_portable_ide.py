@@ -13,7 +13,7 @@ import shutil
 import time
 import zipfile
 
-def patch_portable_ide(staging_dir, resources_dir, tag_name="1.0.0"):
+def patch_portable_ide(staging_dir, resources_dir, tag_name="1.2.0"):
     staging_dir = os.path.abspath(staging_dir)
     resources_dir = os.path.abspath(resources_dir)
     

@@ -69,6 +69,7 @@ object JormungandrBranding {
         patchApplicationInfo()
         patchConsentOptions()
         replaceUpstreamAboutAction()
+        registerUpdateActions()
         rebrandActionManager()
         installGlobalWindowInterceptor()
         rebrandAllWindows()
@@ -226,6 +227,25 @@ object JormungandrBranding {
             }
         } catch (e: Throwable) {
             LOG.warn("Could not replace upstream About action (non-fatal)", e)
+        }
+    }
+
+    /**
+     * Registers Jörmungandr CheckForUpdatesAction and replaces upstream CheckForUpdate.
+     */
+    fun registerUpdateActions() {
+        try {
+            val actionManager = ActionManager.getInstance() ?: return
+            val updateAction = org.jormungandr.shell.update.CheckForUpdatesAction()
+            val existing = actionManager.getAction("CheckForUpdate")
+            if (existing != null && existing !is org.jormungandr.shell.update.CheckForUpdatesAction) {
+                actionManager.replaceAction("CheckForUpdate", updateAction)
+            } else if (actionManager.getAction("JormungandrCheckForUpdates") == null) {
+                actionManager.registerAction("JormungandrCheckForUpdates", updateAction)
+            }
+            LOG.info("Registered Jörmungandr CheckForUpdatesAction.")
+        } catch (e: Throwable) {
+            LOG.warn("Could not register CheckForUpdates action (non-fatal)", e)
         }
     }
 

@@ -4,7 +4,7 @@
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
-$tag = "v1.1.0"
+$tag = "v1.2.0"
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Packaging Jormungandr Release: $tag" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -71,6 +71,12 @@ if (Test-Path $samplesSource) {
     Write-Host "[OK] Bundled samples into $targetSamples" -ForegroundColor Green
 }
 
+Write-Host "Deploying smart delta auto-updater binaries..." -ForegroundColor Yellow
+$updaterBat = Join-Path $ProjectRoot "installer\jormungandr-updater.bat"
+$updaterPs1 = Join-Path $ProjectRoot "installer\jormungandr-updater.ps1"
+Copy-Item -Path $updaterBat -Destination (Join-Path $stagingDir "bin\jormungandr-updater.bat") -Force
+Copy-Item -Path $updaterPs1 -Destination (Join-Path $stagingDir "bin\jormungandr-updater.ps1") -Force
+
 Write-Host "Patching portable distribution via patch_portable_ide.py..." -ForegroundColor Yellow
 python "$ProjectRoot\tools\patch_portable_ide.py" "$stagingDir" "$resourcesDir" "$tag"
 
@@ -78,7 +84,7 @@ python "$ProjectRoot\tools\patch_portable_ide.py" "$stagingDir" "$resourcesDir" 
 $portableZip = Join-Path $distDir "Jormungandr-$tag-windows-x64.zip"
 Write-Host "Compressing standalone portable package to $portableZip..." -ForegroundColor Yellow
 
-# Archive from stagingRoot so the archive contains Jormungandr-v1.0.0/... folder
+# Archive from stagingRoot so the archive contains Jormungandr-v1.2.0/... folder
 Push-Location $stagingRoot
 try {
     & 7z a -tzip -mx=5 $portableZip "Jormungandr-$tag"
@@ -93,7 +99,14 @@ if (Test-Path $portableZip) {
     Write-Error "Failed to produce $portableZip"
 }
 
-# 3. Turnkey Windows Installer (.exe via Inno Setup)
+# 3. Smart Delta Patch Package (v1.1.0 -> v1.2.0)
+$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.1.0-windows-x64.zip"
+if (Test-Path $baselineZip) {
+    Write-Host "Generating Smart Delta Patch against v1.1.0 baseline..." -ForegroundColor Yellow
+    & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion "1.1.0" -ToVersion "1.2.0" -OutputDir $distDir
+}
+
+# 4. Turnkey Windows Installer (.exe via Inno Setup)
 Write-Host "Compiling Windows Installer executable (.exe)..." -ForegroundColor Yellow
 $installerVersion = $tag.TrimStart('v')
 & "$ProjectRoot\tools\build_installer.ps1" -SourceDir $stagingDir -Version $installerVersion -OutputDir $distDir

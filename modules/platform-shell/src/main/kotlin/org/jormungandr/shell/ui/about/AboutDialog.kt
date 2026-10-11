@@ -96,7 +96,7 @@ class AboutDialog(project: Project? = null) : DialogWrapper(project, true) {
             foreground = Color(42, 161, 152) // Solarized Cyan
         }
         val versionRow = JPanel(FlowLayout(FlowLayout.LEFT, 8, 0)).apply { isOpaque = false }
-        val versionLabel = JBLabel("Version 1.0.0 · Built on IntelliJ Platform 2024.3").apply {
+        val versionLabel = JBLabel("Version ${org.jormungandr.shell.update.AppVersion.CURRENT} · Built on IntelliJ Platform 2024.3").apply {
             font = font.deriveFont(Font.PLAIN, 11f)
             foreground = Color(120, 120, 120)
         }
@@ -107,8 +107,43 @@ class AboutDialog(project: Project? = null) : DialogWrapper(project, true) {
                 org.jormungandr.shell.license.LicenseDialog(null).show()
             }
         }
+        val checkUpdatesBtn = JButton("🚀 Check for Updates...").apply {
+            font = font.deriveFont(Font.PLAIN, 10.5f)
+            isFocusable = false
+            addActionListener {
+                close(OK_EXIT_CODE)
+                val checkService = org.jormungandr.shell.update.UpdateCheckService.getInstance()
+                checkService.checkForUpdates(
+                    onResult = { info ->
+                        SwingUtilities.invokeLater {
+                            if (info != null) {
+                                org.jormungandr.shell.update.UpdateDialog(info).show()
+                            } else {
+                                JOptionPane.showMessageDialog(
+                                    null,
+                                    "You are running Jörmungandr v${org.jormungandr.shell.update.AppVersion.CURRENT}, which is currently the newest version available.",
+                                    "Jörmungandr is Up to Date",
+                                    JOptionPane.INFORMATION_MESSAGE
+                                )
+                            }
+                        }
+                    },
+                    onError = { err ->
+                        SwingUtilities.invokeLater {
+                            JOptionPane.showMessageDialog(
+                                null,
+                                "Could not connect to update server: ${err.message}",
+                                "Update Check Error",
+                                JOptionPane.WARNING_MESSAGE
+                            )
+                        }
+                    }
+                )
+            }
+        }
         versionRow.add(versionLabel)
         versionRow.add(manageLicenseLink)
+        versionRow.add(checkUpdatesBtn)
 
         textPanel.add(titleRow)
         textPanel.add(Box.createVerticalStrut(4))
