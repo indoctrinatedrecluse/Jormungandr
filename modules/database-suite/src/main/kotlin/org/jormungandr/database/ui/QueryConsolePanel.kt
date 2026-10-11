@@ -309,7 +309,9 @@ class QueryConsolePanel(private val project: com.intellij.openapi.project.Projec
 
         val sql = queryEditor.text.trim()
         val plan = ExplainPlanEngine.explain(conn, config.dialect, sql)
-        ExplainPlanDialog(project, plan).show()
+        ExplainPlanDialog(project, plan) { analyze ->
+            ExplainPlanEngine.explain(conn, config.dialect, sql, analyze)
+        }.show()
     }
 
     fun openInDataFrameStudio() {

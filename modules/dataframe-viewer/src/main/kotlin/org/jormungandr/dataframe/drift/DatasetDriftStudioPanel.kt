@@ -101,6 +101,22 @@ class DatasetDriftStudioPanel(
         left.add(statusBanner)
 
         val right = JPanel(FlowLayout(FlowLayout.RIGHT, 6, 0)).apply { isOpaque = false }
+        val loadTargetBtn = JButton("📂 Compare Target Dataset...").apply {
+            font = font.deriveFont(Font.PLAIN, 11f)
+            isFocusable = false
+            toolTipText = "Load a second CSV or Parquet dataset to compare distributions against baseline"
+            addActionListener { promptLoadTargetDataset() }
+        }
+        right.add(loadTargetBtn)
+
+        val simBtn = JButton("⚡ Simulate Drift").apply {
+            font = font.deriveFont(Font.PLAIN, 11f)
+            isFocusable = false
+            toolTipText = "Simulate covariate shift on current dataset to test drift detection"
+            addActionListener { simulateProductionDrift() }
+        }
+        right.add(simBtn)
+
         val copyScriptBtn = JButton("📋 Copy Python Drift Script").apply {
             font = font.deriveFont(Font.PLAIN, 11f)
             isFocusable = false
@@ -126,6 +142,8 @@ class DatasetDriftStudioPanel(
         add(split, BorderLayout.CENTER)
     }
 
+    private var currentReference: DataFrame? = null
+
     fun setReport(report: DatasetDriftReport) {
         this.currentReport = report
         updateBanner(report)
@@ -135,8 +153,47 @@ class DatasetDriftStudioPanel(
     }
 
     fun compare(reference: DataFrame, target: DataFrame, refName: String = "Train", tgtName: String = "Test") {
+        this.currentReference = reference
         val report = DatasetDriftDetectorService.compareDatasets(reference, target, refName, tgtName)
         setReport(report)
+    }
+
+    private fun promptLoadTargetDataset() {
+        val chooser = JFileChooser().apply {
+            dialogTitle = "Select Target Dataset to Compare (CSV / Parquet)"
+            fileFilter = javax.swing.filechooser.FileNameExtensionFilter("Tabular Data (*.csv, *.parquet)", "csv", "parquet")
+        }
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            val file = chooser.selectedFile
+            try {
+                val targetDf = if (file.name.endsWith(".parquet", ignoreCase = true)) {
+                    org.jormungandr.dataframe.io.ParquetDataLoader.loadFromFile(file)
+                } else {
+                    org.jormungandr.dataframe.io.CsvDataLoader.loadFromString(file.nameWithoutExtension, file.readText())
+                }
+                val ref = currentReference ?: targetDf
+                compare(ref, targetDf, ref.name, file.name)
+            } catch (e: Exception) {
+                Messages.showErrorDialog(this, "Failed to load target dataset: ${e.message}", "Drift Studio")
+            }
+        }
+    }
+
+    private fun simulateProductionDrift() {
+        val ref = currentReference ?: return
+        if (ref.rows.isEmpty()) return
+        val perturbedRows = ref.rows.mapIndexed { idx, row ->
+            row.mapIndexed { _, value ->
+                if (value is Number) {
+                    val num = value.toDouble()
+                    val factor = 1.35 + 0.15 * kotlin.math.sin(idx.toDouble())
+                    (num * factor) + 5.0
+                } else value
+            }
+        }
+        val perturbedCols = ref.columns.map { Pair(it.name, it.category) }
+        val perturbedDf = DataFrame.buildWithStatistics("${ref.name} (Drifted)", perturbedCols, perturbedRows)
+        compare(ref, perturbedDf, ref.name, "Simulated Shifted Target")
     }
 
     private fun updateBanner(report: DatasetDriftReport) {

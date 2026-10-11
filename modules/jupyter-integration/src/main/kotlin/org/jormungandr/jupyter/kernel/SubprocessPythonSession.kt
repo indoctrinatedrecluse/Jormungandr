@@ -256,6 +256,19 @@ class SubprocessPythonSession(
         runnerTempFile = null
     }
 
+    fun forceKill() {
+        _status.value = KernelStatus.DISCONNECTED
+        sessionScope.cancel()
+        process?.destroyForcibly()
+        process = null
+        runCatching { writer?.close() }
+        runCatching { reader?.close() }
+        writer = null
+        reader = null
+        runnerTempFile?.delete()
+        runnerTempFile = null
+    }
+
     private fun buildRunnerScript(): String {
         return """
 import sys, base64, traceback, ast, io, os, json, types, builtins

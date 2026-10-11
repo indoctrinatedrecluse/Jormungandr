@@ -96,9 +96,15 @@ class HardwareTelemetryService : Disposable {
         }
     }
 
+    @Volatile
+    private var isDisposed = false
+
     override fun dispose() {
+        if (isDisposed) return
+        isDisposed = true
         try {
             scheduler.shutdownNow()
+            scheduler.awaitTermination(300, TimeUnit.MILLISECONDS)
         } catch (_: Exception) {}
         listeners.clear()
         synchronized(historyLock) {
@@ -107,7 +113,9 @@ class HardwareTelemetryService : Disposable {
     }
 
     private fun pollHardware() {
+        if (isDisposed) return
         val snapshot = sampleTelemetry()
+        if (isDisposed) return
         currentSnapshot = snapshot
         synchronized(historyLock) {
             history.addLast(snapshot)

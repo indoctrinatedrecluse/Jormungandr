@@ -55,16 +55,30 @@
                     canCloseContent="true"
                     icon="/icons/jormungandr_16.png"
                     factoryClass="org.jormungandr.shell.copilot.local.PromptStudioToolWindowFactory"/>
+        <inline.completion.provider implementation="org.jormungandr.shell.copilot.local.JormungandrInlineCompletionProvider"/>
 
         <!-- Commercial Licensing & Extension Gating Subsystem -->
         <applicationService serviceImplementation="org.jormungandr.core.license.LicenseService"/>
         <statusBarWidgetFactory id="org.jormungandr.shell.license.LicenseStatusBarWidget"
                                 implementation="org.jormungandr.shell.license.LicenseStatusBarWidgetFactory"/>
 
+        <!-- Fast Python Environment & uv Subsystem -->
+        <applicationService serviceImplementation="org.jormungandr.shell.environment.UvEnvironmentService"/>
+        <statusBarWidgetFactory id="org.jormungandr.shell.environment.PythonEnvironmentStatusBarWidget"
+                                implementation="org.jormungandr.shell.environment.PythonEnvironmentStatusBarWidgetFactory"/>
+
         <!-- Animated Splash Screen & Branding Lifecycle -->
         <applicationInitializedListener implementation="org.jormungandr.shell.splash.JormungandrAppInitializer"/>
         <postStartupActivity implementation="org.jormungandr.shell.splash.JormungandrStartupActivity"/>
+
+        <!-- Passive Auto-Update Notification Channel -->
+        <notificationGroup id="Jormungandr.Updates" displayType="BALLOON" isLogByDefault="true"/>
     </extensions>
+
+    <applicationListeners>
+        <listener class="org.jormungandr.shell.lifecycle.JormungandrShutdownListener"
+                  topic="com.intellij.ide.AppLifecycleListener"/>
+    </applicationListeners>
 
     <actions>
         <!-- Project Creation Action -->

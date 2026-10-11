@@ -10,7 +10,11 @@ data class VariableInfo(
     val sizeBytes: Long = 0L,
     val sizeFormatted: String = "-",
     val preview: String = "",
-    val isDataFrame: Boolean = false
+    val isDataFrame: Boolean = false,
+    val isTensor: Boolean = false,
+    val tensorDevice: String? = null,
+    val tensorDtype: String? = null,
+    val isPolars: Boolean = false
 ) {
     companion object {
         fun formatBytes(bytes: Long): String {

@@ -115,6 +115,40 @@ enum class DataScienceProjectTemplate(
             "albumentations>=1.4.0",
             "matplotlib>=3.8.0"
         )
+    ),
+
+    LAKEHOUSE_ANALYTICS(
+        id = "lakehouse-analytics",
+        displayName = "Lakehouse & Delta Lake Analytics",
+        category = "Data Engineering & Lakehouses",
+        iconEmoji = "🧊",
+        summary = "Delta Lake, Apache Iceberg, DuckDB & Parquet Time-Travel",
+        description = "Modern lakehouse analytics workspace equipped with Delta Lake ingestion scripts, ACID time-travel queries, DuckDB parquet engines, and schema drift inspection.",
+        coreLibraries = listOf("deltalake", "duckdb", "pyarrow", "polars", "pandas"),
+        defaultDependencies = listOf(
+            "deltalake>=0.17.0",
+            "duckdb>=0.10.0",
+            "pyarrow>=15.0.0",
+            "polars>=0.20.0",
+            "pandas>=2.2.0"
+        )
+    ),
+
+    AIRFLOW_PIPELINE(
+        id = "airflow-pipeline",
+        displayName = "Airflow ETL & Pipeline Orchestration",
+        category = "Data Engineering & Pipelines",
+        iconEmoji = "🌊",
+        summary = "Apache Airflow DAGs, TaskFlow API & Automated Data Pipelines",
+        description = "Production data pipeline orchestration workspace with modular Airflow DAG definitions, data quality validation steps, and DuckDB analytical sinks.",
+        coreLibraries = listOf("apache-airflow", "pandas", "duckdb", "requests", "pydantic"),
+        defaultDependencies = listOf(
+            "apache-airflow>=2.8.0",
+            "pandas>=2.2.0",
+            "duckdb>=0.10.0",
+            "pydantic>=2.7.0",
+            "requests>=2.31.0"
+        )
     );
 
     /**
@@ -173,6 +207,20 @@ enum class DataScienceProjectTemplate(
                 files.add(TemplateFile("src/backbone.py", generateVisionBackbonePy()))
                 files.add(TemplateFile("data/images/.gitkeep", ""))
                 files.add(TemplateFile("models/weights/.gitkeep", ""))
+            }
+
+            LAKEHOUSE_ANALYTICS -> {
+                files.add(TemplateFile("notebooks/01_lakehouse_timetravel.ipynb", generateLakehouseNotebook(projectName), isPrimaryToOpen = true))
+                files.add(TemplateFile("src/ingest_delta.py", generateDeltaIngestPy()))
+                files.add(TemplateFile("queries/duckdb_delta_scan.sql", generateDuckDbDeltaSql()))
+                files.add(TemplateFile("data/delta_tables/.gitkeep", ""))
+            }
+
+            AIRFLOW_PIPELINE -> {
+                files.add(TemplateFile("dags/analytics_etl_dag.py", generateAirflowDagPy(projectName), isPrimaryToOpen = true))
+                files.add(TemplateFile("src/tasks/extract.py", generateAirflowExtractPy()))
+                files.add(TemplateFile("src/tasks/transform.py", generateAirflowTransformPy()))
+                files.add(TemplateFile("tests/test_dag_validation.py", generateAirflowTestPy(projectName)))
             }
         }
 
@@ -764,4 +812,156 @@ enum class DataScienceProjectTemplate(
                 flat = torch.flatten(feat, 1)
                 return self.classifier(flat)
     """.trimIndent()
+
+    private fun generateLakehouseNotebook(projectName: String): String {
+        val model = NotebookModel()
+        model.addCell(
+            CellType.MARKDOWN,
+            "# $projectName: Modern Lakehouse & ACID Time-Travel 🧊\n\nQuery and inspect Delta Lake and Apache Iceberg tables with zero-copy DuckDB analytics and version time-travel."
+        )
+        model.addCell(
+            CellType.CODE,
+            """
+                import duckdb
+                import pandas as pd
+                from deltalake import DeltaTable, write_deltalake
+
+                # 1. Create and ingest initial Delta Lake table (Version 0)
+                data_v0 = pd.DataFrame({
+                    "user_id": [101, 102, 103, 104],
+                    "transaction_amt": [250.0, 45.0, 120.5, 990.0],
+                    "category": ["Electronics", "Groceries", "Dining", "Travel"]
+                })
+                table_path = "data/delta_tables/transactions"
+                write_deltalake(table_path, data_v0, mode="overwrite")
+                print("Delta Table Version 0 written successfully!")
+            """.trimIndent()
+        )
+        model.addCell(
+            CellType.CODE,
+            """
+                # 2. Append batch for Version 1
+                data_v1 = pd.DataFrame({
+                    "user_id": [105, 106],
+                    "transaction_amt": [75.0, 310.0],
+                    "category": ["Groceries", "Electronics"]
+                })
+                write_deltalake(table_path, data_v1, mode="append")
+                dt = DeltaTable(table_path)
+                print(f"Current Delta Table Version: v{dt.version()}")
+            """.trimIndent()
+        )
+        model.addCell(
+            CellType.CODE,
+            """
+                # 3. DuckDB Time-Travel Query over Delta Lake
+                con = duckdb.connect()
+                # Query latest snapshot
+                latest_df = con.execute(f"SELECT * FROM delta_scan('{table_path}')").fetchdf()
+                print("--- Current Snapshot (Latest) ---")
+                print(latest_df)
+
+                # Query Version 0 snapshot
+                v0_df = con.execute(f"SELECT * FROM delta_scan('{table_path}') VERSION AS OF 0").fetchdf()
+                print("\n--- Snapshot Time-Travel (VERSION AS OF 0) ---")
+                print(v0_df)
+            """.trimIndent()
+        )
+        return NotebookFormat.writeNotebook(model)
+    }
+
+    private fun generateDeltaIngestPy(): String = """
+        from deltalake import write_deltalake
+        import pandas as pd
+        import os
+
+        def ingest_batch(df: pd.DataFrame, table_name: str, mode: str = "append"):
+            '''Ingests a pandas DataFrame into a partitioned Delta Lake table.'''
+            output_dir = os.path.join("data", "delta_tables", table_name)
+            os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+            write_deltalake(output_dir, df, mode=mode)
+            print(f"Successfully ingested {len(df)} rows into {output_dir}")
+    """.trimIndent()
+
+    private fun generateDuckDbDeltaSql(): String = """
+        -- DuckDB Zero-Copy Analytics over Delta Lake & Parquet
+        SELECT
+            category,
+            COUNT(*) AS total_txns,
+            ROUND(SUM(transaction_amt), 2) AS total_revenue,
+            ROUND(AVG(transaction_amt), 2) AS avg_txn_value
+        FROM delta_scan('data/delta_tables/transactions')
+        GROUP BY category
+        ORDER BY total_revenue DESC;
+    """.trimIndent()
+
+    private fun generateAirflowDagPy(projectName: String): String = """
+        from datetime import datetime, timedelta
+        from airflow.decorators import dag, task
+        import pandas as pd
+
+        default_args = {
+            'owner': 'data-engineering',
+            'depends_on_past': False,
+            'email_on_failure': False,
+            'retries': 1,
+            'retry_delay': timedelta(minutes=5),
+        }
+
+        @dag(
+            dag_id='${projectName.lowercase().replace('-', '_')}_etl_pipeline',
+            default_args=default_args,
+            description='Automated Data Pipeline with Data Quality Validation',
+            schedule_interval=timedelta(days=1),
+            start_date=datetime(2026, 1, 1),
+            catchup=False,
+            tags=['etl', 'analytics', 'duckdb'],
+        )
+        def etl_pipeline():
+            @task
+            def extract() -> dict:
+                '''Extract raw tabular data from source.'''
+                return {"records_extracted": 1250, "status": "SUCCESS"}
+
+            @task
+            def transform(payload: dict) -> dict:
+                '''Transform and clean datasets.'''
+                count = payload.get("records_extracted", 0)
+                return {"records_cleaned": count, "validation": "PASSED"}
+
+            @task
+            def load_to_lake(transformed: dict):
+                '''Load cleansed data to lakehouse parquet sink.'''
+                print(f"Loaded {transformed['records_cleaned']} records to analytical storage.")
+
+            raw_data = extract()
+            clean_data = transform(raw_data)
+            load_to_lake(clean_data)
+
+        pipeline = etl_pipeline()
+    """.trimIndent()
+
+    private fun generateAirflowExtractPy(): String = """
+        def run_extraction():
+            '''Sample extraction task for upstream API or database.'''
+            return {"status": "ok", "rows": 500}
+    """.trimIndent()
+
+    private fun generateAirflowTransformPy(): String = """
+        import pandas as pd
+
+        def clean_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+            '''Deduplicates and drops missing values from source data.'''
+            return df.drop_duplicates().dropna()
+    """.trimIndent()
+
+    private fun generateAirflowTestPy(projectName: String): String = """
+        from airflow.models import DagBag
+
+        def test_dag_loaded():
+            '''Ensures DAG parses cleanly with zero syntax or import errors.'''
+            dagbag = DagBag(dag_folder='dags/', include_examples=False)
+            assert len(dagbag.import_errors) == 0, f"DAG import errors: {dagbag.import_errors}"
+    """.trimIndent()
 }
+

@@ -148,6 +148,60 @@ class LakehouseStudioPanel(
             )
         }.toTypedArray()
 
+        val sortedCommits = lakehouseReport.historyCommits.sortedBy { it.version }
+        val maxCommitIdx = kotlin.math.max(0, sortedCommits.size - 1)
+
+        val scrubberCard = JPanel(BorderLayout(0, 6)).apply {
+            border = BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(JBColor.border(), 1, true),
+                JBUI.Borders.empty(8, 12)
+            )
+            background = Color(248, 250, 252)
+        }
+
+        val scrubHeader = JPanel(BorderLayout()).apply {
+            isOpaque = false
+            val titleLbl = JBLabel("⏱ Interactive Time-Travel Snapshot Scrubber:").apply {
+                font = font.deriveFont(Font.BOLD, 12f)
+            }
+            val replayBtn = JButton("▶ Replay History").apply { font = font.deriveFont(Font.PLAIN, 11f) }
+            val prevBtn = JButton("◀ Prev").apply { font = font.deriveFont(Font.PLAIN, 11f) }
+            val nextBtn = JButton("Next ▶").apply { font = font.deriveFont(Font.PLAIN, 11f) }
+
+            val actionsRow = JPanel(FlowLayout(FlowLayout.RIGHT, 4, 0)).apply {
+                isOpaque = false
+                add(prevBtn)
+                add(nextBtn)
+                add(replayBtn)
+            }
+            add(titleLbl, BorderLayout.WEST)
+            add(actionsRow, BorderLayout.EAST)
+        }
+
+        val slider = JSlider(0, maxCommitIdx, maxCommitIdx).apply {
+            majorTickSpacing = 1
+            paintTicks = true
+            paintLabels = true
+            snapToTicks = true
+            isOpaque = false
+            if (sortedCommits.isNotEmpty()) {
+                val labelDict = java.util.Hashtable<Int, JLabel>()
+                sortedCommits.forEachIndexed { i, c ->
+                    labelDict[i] = JLabel("v${c.version}")
+                }
+                labelTable = labelDict
+            }
+        }
+
+        val snapshotHudLabel = JBLabel("").apply {
+            font = font.deriveFont(Font.BOLD, 11.5f)
+            foreground = Color(30, 41, 59)
+        }
+        val diffHudLabel = JBLabel("").apply {
+            font = font.deriveFont(Font.PLAIN, 11f)
+            foreground = Color(71, 85, 105)
+        }
+
         val commitModel = DefaultTableModel(commitData, commitNames)
         val commitTable = JBTable(commitModel)
 
@@ -158,12 +212,74 @@ class LakehouseStudioPanel(
             text = lakehouseReport.historyCommits.firstOrNull()?.timeTravelSql ?: "-- No Time-Travel SQL available"
         }
 
+        fun updateSnapshotDisplay(idx: Int) {
+            val commit = sortedCommits.getOrNull(idx) ?: return
+            snapshotHudLabel.text = "🕒 Active Snapshot: Version v${commit.version} | Timestamp: ${commit.formattedTime} | Op: ${commit.operation}"
+            diffHudLabel.text = "📊 Cumulative Records: ${String.format("%,d", commit.totalRecords)} (+${commit.addedFilesCount} / -${commit.removedFilesCount} files) | Engine: ${commit.engine}"
+            sqlArea.text = commit.timeTravelSql
+
+            val tableRow = lakehouseReport.historyCommits.indexOfFirst { it.version == commit.version }
+            if (tableRow >= 0 && commitTable.selectedRow != tableRow) {
+                commitTable.setRowSelectionInterval(tableRow, tableRow)
+            }
+        }
+
+        slider.addChangeListener {
+            updateSnapshotDisplay(slider.value)
+        }
+
+        val prevBtnComponent = ((scrubHeader.getComponent(1) as JPanel).getComponent(0) as JButton)
+        val nextBtnComponent = ((scrubHeader.getComponent(1) as JPanel).getComponent(1) as JButton)
+        val replayBtnComponent = ((scrubHeader.getComponent(1) as JPanel).getComponent(2) as JButton)
+
+        prevBtnComponent.addActionListener {
+            if (slider.value > 0) slider.value -= 1
+        }
+        nextBtnComponent.addActionListener {
+            if (slider.value < maxCommitIdx) slider.value += 1
+        }
+
+        var replayTimer: javax.swing.Timer? = null
+        replayBtnComponent.addActionListener {
+            if (replayTimer?.isRunning == true) {
+                replayTimer?.stop()
+                replayBtnComponent.text = "▶ Replay History"
+            } else {
+                slider.value = 0
+                replayBtnComponent.text = "⏹ Stop Replay"
+                replayTimer = javax.swing.Timer(750) {
+                    if (slider.value < maxCommitIdx) {
+                        slider.value += 1
+                    } else {
+                        replayTimer?.stop()
+                        replayBtnComponent.text = "▶ Replay History"
+                    }
+                }.apply { start() }
+            }
+        }
+
         commitTable.selectionModel.addListSelectionListener {
             val row = commitTable.selectedRow
             if (row >= 0 && row < lakehouseReport.historyCommits.size) {
-                sqlArea.text = lakehouseReport.historyCommits[row].timeTravelSql
+                val commit = lakehouseReport.historyCommits[row]
+                val sliderIdx = sortedCommits.indexOfFirst { it.version == commit.version }
+                if (sliderIdx >= 0 && slider.value != sliderIdx) {
+                    slider.value = sliderIdx
+                }
             }
         }
+
+        val hudPanel = JPanel(GridLayout(2, 1, 0, 2)).apply {
+            isOpaque = false
+            add(snapshotHudLabel)
+            add(diffHudLabel)
+        }
+
+        scrubberCard.add(scrubHeader, BorderLayout.NORTH)
+        scrubberCard.add(slider, BorderLayout.CENTER)
+        scrubberCard.add(hudPanel, BorderLayout.SOUTH)
+
+        updateSnapshotDisplay(slider.value)
 
         val queryCard = JPanel(BorderLayout(0, 6)).apply {
             border = BorderFactory.createCompoundBorder(
@@ -222,8 +338,13 @@ class LakehouseStudioPanel(
             add(JBScrollPane(commitTable), BorderLayout.CENTER)
         }
 
+        val contentSplit = JPanel(BorderLayout(0, 8)).apply {
+            add(scrubberCard, BorderLayout.NORTH)
+            add(tableCard, BorderLayout.CENTER)
+        }
+
         panel.add(kpiPanel, BorderLayout.NORTH)
-        panel.add(tableCard, BorderLayout.CENTER)
+        panel.add(contentSplit, BorderLayout.CENTER)
         panel.add(queryCard, BorderLayout.SOUTH)
         return panel
     }

@@ -87,6 +87,20 @@ class ExplainPlanEngineTest {
     }
 
     @Test
+    fun `test duckdb explain analyze execution`() {
+        val plan = ExplainPlanEngine.explain(
+            duckConn,
+            DatabaseDialect.DUCKDB,
+            "SELECT name, AVG(val) FROM metrics GROUP BY name;",
+            analyze = true
+        )
+
+        assertEquals("DuckDB (Embedded)", plan.dialect)
+        assertTrue(plan.rootNodes.isNotEmpty())
+        assertTrue(plan.rawText.isNotEmpty())
+    }
+
+    @Test
     fun `test explain on syntax error reports graceful error node`() {
         val plan = ExplainPlanEngine.explain(
             sqliteConn,

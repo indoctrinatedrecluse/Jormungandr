@@ -47,6 +47,12 @@
                     canCloseContent="true"
                     icon="/icons/plots_16.png"
                     factoryClass="org.jormungandr.jupyter.ui.plot.ScientificPlotsToolWindowFactory"/>
+
+        <toolWindow id="Variable Inspector"
+                    anchor="right"
+                    canCloseContent="true"
+                    icon="/icons/jupyter_16.png"
+                    factoryClass="org.jormungandr.jupyter.ui.variable.VariableInspectorToolWindowFactory"/>
     </extensions>
 
     <actions>

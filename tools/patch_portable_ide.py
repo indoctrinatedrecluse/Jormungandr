@@ -232,6 +232,8 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.2.0"):
         "idea.fatal.error.notification=disabled",
         "sun.java2d.uiScale.enabled=true",
         "swing.bufferPerWindow=true",
+        "ide.ui.new.file.chooser=true",
+        "ide.save.settings.on.exit=true",
         ""
     ]
     with open(idea_properties_path, 'w', encoding='utf-8', newline='\n') as f:
@@ -257,6 +259,8 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.2.0"):
         "-Dwsl.enabled=false",
         "-Dide.ijent.wsldefault=false",
         "-Didea.wsl.support.enabled=false",
+        "-Dide.ui.new.file.chooser=true",
+        "-Dide.save.settings.on.exit=true",
         "-Dsplash=true",
         ""
     ]

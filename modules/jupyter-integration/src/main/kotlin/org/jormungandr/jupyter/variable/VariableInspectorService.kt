@@ -40,6 +40,16 @@ class VariableInspectorService(private val project: Project) {
                     __shape = str(getattr(__v, 'shape', '-'))
                     __size = int(getattr(__v, 'nbytes', getattr(__v, '__sizeof__', lambda: 0)()))
                     __is_df = __t in ('DataFrame', 'Series') or hasattr(__v, 'to_csv')
+                    __is_polars = 'polars' in str(getattr(type(__v), '__module__', ''))
+                    __is_tensor = False
+                    __tensor_device = None
+                    __tensor_dtype = None
+                    if hasattr(__v, 'device') and hasattr(__v, 'dtype'):
+                        __is_tensor = True
+                        __tensor_device = str(__v.device)
+                        __tensor_dtype = str(__v.dtype).replace('torch.', '')
+                        if hasattr(__v, 'element_size') and hasattr(__v, 'nelement'):
+                            __size = int(__v.element_size() * __v.nelement())
                     __rep = repr(__v)
                     if len(__rep) > 100:
                         __rep = __rep[:97] + '...'
@@ -49,7 +59,11 @@ class VariableInspectorService(private val project: Project) {
                         'shape': __shape,
                         'size': __size,
                         'preview': __rep,
-                        'is_df': __is_df
+                        'is_df': __is_df,
+                        'is_tensor': __is_tensor,
+                        'tensor_device': __tensor_device,
+                        'tensor_dtype': __tensor_dtype,
+                        'is_polars': __is_polars
                     })
                 except Exception:
                     pass
@@ -78,6 +92,10 @@ class VariableInspectorService(private val project: Project) {
                     val sizeBytes = (item["size"] as? Number)?.toLong() ?: 0L
                     val preview = item["preview"]?.toString() ?: ""
                     val isDf = item["is_df"] as? Boolean ?: false
+                    val isTensor = item["is_tensor"] as? Boolean ?: false
+                    val tensorDevice = item["tensor_device"]?.toString()
+                    val tensorDtype = item["tensor_dtype"]?.toString()
+                    val isPolars = item["is_polars"] as? Boolean ?: false
                     VariableInfo(
                         name = name,
                         typeName = typeName,
@@ -85,7 +103,11 @@ class VariableInspectorService(private val project: Project) {
                         sizeBytes = sizeBytes,
                         sizeFormatted = VariableInfo.formatBytes(sizeBytes),
                         preview = preview,
-                        isDataFrame = isDf
+                        isDataFrame = isDf,
+                        isTensor = isTensor,
+                        tensorDevice = tensorDevice,
+                        tensorDtype = tensorDtype,
+                        isPolars = isPolars
                     )
                 }
                 _variables.value = parsed
@@ -174,6 +196,56 @@ class VariableInspectorService(private val project: Project) {
             }.getOrNull()
         }
         return null
+    }
+
+    suspend fun openVariableInDataFrameViewer(session: KernelSession, varName: String) {
+        val triggerCode = """
+            try:
+                import jormungandr
+                jormungandr.show_dataframe(globals().get('$varName'), title='Variable: $varName')
+            except Exception as e:
+                print('Error launching DataFrame Viewer:', e)
+        """.trimIndent()
+        session.execute(triggerCode) {}
+    }
+
+    suspend fun inspectTensorDetails(session: KernelSession, varName: String): String? {
+        val inspectCode = """
+            try:
+                import json
+                __t = globals().get('$varName')
+                __res = {
+                    'name': '$varName',
+                    'type': str(type(__t).__name__),
+                    'shape': str(list(__t.shape) if hasattr(__t, 'shape') else '-'),
+                    'dtype': str(getattr(__t, 'dtype', '-')),
+                    'device': str(getattr(__t, 'device', 'cpu')),
+                    'requires_grad': bool(getattr(__t, 'requires_grad', False)),
+                    'numel': int(getattr(__t, 'numel', lambda: 0)()),
+                    'min': float(__t.min().item()) if hasattr(__t, 'min') else None,
+                    'max': float(__t.max().item()) if hasattr(__t, 'max') else None,
+                    'mean': float(__t.float().mean().item()) if hasattr(__t, 'mean') else None
+                }
+                print('__JG_TENSOR_JSON__' + json.dumps(__res))
+            except Exception as e:
+                print('__JG_TENSOR_ERR__' + str(e))
+        """.trimIndent()
+        var jsonResult: String? = null
+        session.execute(inspectCode) { out ->
+            if (out is CellOutput.StreamOutput) {
+                for (l in out.text.lines()) {
+                    if (l.startsWith("__JG_TENSOR_JSON__")) {
+                        jsonResult = l.removePrefix("__JG_TENSOR_JSON__").trim()
+                    }
+                }
+            }
+        }
+        return jsonResult
+    }
+
+    suspend fun deleteVariable(session: KernelSession, varName: String) {
+        session.execute("try:\n    del globals()['$varName']\nexcept Exception:\n    pass") {}
+        refresh(session)
     }
 
     fun getActiveSession(): KernelSession? = activeSession

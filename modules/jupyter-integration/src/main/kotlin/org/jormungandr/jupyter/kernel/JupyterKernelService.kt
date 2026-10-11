@@ -77,9 +77,13 @@ class JupyterKernelService : Disposable {
         sessions.clear()
         for (session in activeSessions) {
             runCatching {
-                kotlinx.coroutines.runBlocking {
-                    kotlinx.coroutines.withTimeoutOrNull(1500L) {
-                        session.shutdown()
+                if (session is SubprocessPythonSession) {
+                    session.forceKill()
+                } else {
+                    kotlinx.coroutines.runBlocking {
+                        kotlinx.coroutines.withTimeoutOrNull(300L) {
+                            session.shutdown()
+                        }
                     }
                 }
             }

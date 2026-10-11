@@ -70,6 +70,61 @@ class JormungandrStartupActivity : ProjectActivity {
         JormungandrSplashScreen.dismiss {
             LOG.info("Splash screen dismissed; main window active.")
         }
+
+        // Schedule passive background update check
+        schedulePassiveUpdateCheck(project)
+    }
+
+    private fun schedulePassiveUpdateCheck(project: Project) {
+        if (!hasCheckedUpdateThisSession.compareAndSet(false, true)) return
+        ApplicationManager.getApplication().executeOnPooledThread {
+            try {
+                Thread.sleep(4000) // Grace period for IDE initialization
+                org.jormungandr.shell.update.UpdateCheckService.getInstance().checkForUpdates(
+                    onResult = { info ->
+                        if (info != null && !project.isDisposed) {
+                            showUpdateNotification(project, info)
+                        }
+                    }
+                )
+            } catch (t: Throwable) {
+                LOG.debug("Passive update check failed", t)
+            }
+        }
+    }
+
+    private fun showUpdateNotification(project: Project, info: org.jormungandr.shell.update.UpdateInfo) {
+        SwingUtilities.invokeLater {
+            if (project.isDisposed) return@invokeLater
+            try {
+                val group = com.intellij.notification.NotificationGroupManager.getInstance()
+                    .getNotificationGroup("Jormungandr.Updates") ?: return@invokeLater
+
+                val badge = if (info.isDeltaPatch) {
+                    val mb = String.format("%.1f", info.downloadSize / (1024.0 * 1024.0))
+                    "Smart Delta Patch ($mb MB)"
+                } else {
+                    "Full Update"
+                }
+
+                val content = "A new release <b>v${info.latestVersion}</b> is available!<br/>" +
+                        "Payload: $badge.<br/>Click below to review release notes and apply."
+
+                val notification = group.createNotification(
+                    "🚀 Jörmungandr Update Available",
+                    content,
+                    com.intellij.notification.NotificationType.INFORMATION
+                )
+
+                notification.addAction(com.intellij.notification.NotificationAction.createSimpleExpiring("Update Now...") {
+                    org.jormungandr.shell.update.UpdateDialog(info, project).show()
+                })
+
+                notification.notify(project)
+            } catch (e: Exception) {
+                LOG.warn("Failed to display update notification", e)
+            }
+        }
     }
 
     private fun applyAppIconBranding(project: Project) {
@@ -85,5 +140,9 @@ class JormungandrStartupActivity : ProjectActivity {
                 LOG.warn("Could not apply window icon branding", e)
             }
         }
+    }
+
+    companion object {
+        private val hasCheckedUpdateThisSession = java.util.concurrent.atomic.AtomicBoolean(false)
     }
 }

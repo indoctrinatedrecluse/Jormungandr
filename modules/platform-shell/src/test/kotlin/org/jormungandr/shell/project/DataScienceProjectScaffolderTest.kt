@@ -83,6 +83,44 @@ class DataScienceProjectScaffolderTest {
     }
 
     @Test
+    fun `test scaffolding lakehouse analytics project`(@TempDir tempDir: File) {
+        val targetDir = File(tempDir, "lakehouse_demo")
+        val options = ScaffoldOptions(
+            projectName = "lakehouse_demo",
+            targetDirectory = targetDir,
+            template = DataScienceProjectTemplate.LAKEHOUSE_ANALYTICS,
+            environmentType = EnvironmentType.UV,
+            initGit = false,
+            autoCreateVenv = false
+        )
+
+        val result = DataScienceProjectScaffolder.scaffold(options)
+        assertTrue(result.success)
+        assertTrue(File(targetDir, "notebooks/01_lakehouse_timetravel.ipynb").exists())
+        assertTrue(File(targetDir, "src/ingest_delta.py").exists())
+        assertTrue(File(targetDir, "queries/duckdb_delta_scan.sql").exists())
+    }
+
+    @Test
+    fun `test scaffolding airflow pipeline project`(@TempDir tempDir: File) {
+        val targetDir = File(tempDir, "airflow_demo")
+        val options = ScaffoldOptions(
+            projectName = "airflow_demo",
+            targetDirectory = targetDir,
+            template = DataScienceProjectTemplate.AIRFLOW_PIPELINE,
+            environmentType = EnvironmentType.UV,
+            initGit = false,
+            autoCreateVenv = false
+        )
+
+        val result = DataScienceProjectScaffolder.scaffold(options)
+        assertTrue(result.success)
+        assertTrue(File(targetDir, "dags/analytics_etl_dag.py").exists())
+        assertTrue(File(targetDir, "src/tasks/extract.py").exists())
+        assertTrue(File(targetDir, "tests/test_dag_validation.py").exists())
+    }
+
+    @Test
     fun `test action presentation and metadata`() {
         val action = NewDataScienceProjectAction()
         assertNotNull(action.templateText)

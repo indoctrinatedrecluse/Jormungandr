@@ -96,4 +96,41 @@ class VariableInspectorTest {
         assertFalse(vars[1].isDataFrame)
         assertEquals("28 B", vars[1].sizeFormatted)
     }
+
+    @Test
+    fun `test tensor and polars deserialization and attributes`() {
+        val tensor = VariableInfo(
+            name = "weights",
+            typeName = "Tensor",
+            shape = "[64, 3, 224, 224]",
+            sizeBytes = 38535168L,
+            sizeFormatted = VariableInfo.formatBytes(38535168L),
+            preview = "tensor([[[[ 0.0123...]]]]",
+            isDataFrame = false,
+            isTensor = true,
+            tensorDevice = "cuda:0",
+            tensorDtype = "float32",
+            isPolars = false
+        )
+
+        assertTrue(tensor.isTensor)
+        assertEquals("cuda:0", tensor.tensorDevice)
+        assertEquals("float32", tensor.tensorDtype)
+        assertEquals("36.8 MB", tensor.sizeFormatted)
+
+        val polarsDf = VariableInfo(
+            name = "pl_data",
+            typeName = "DataFrame",
+            shape = "(50000, 8)",
+            sizeBytes = 3200000L,
+            sizeFormatted = VariableInfo.formatBytes(3200000L),
+            preview = "shape: (50000, 8)\n┌───────┬──────┐",
+            isDataFrame = true,
+            isTensor = false,
+            isPolars = true
+        )
+
+        assertTrue(polarsDf.isDataFrame)
+        assertTrue(polarsDf.isPolars)
+    }
 }
