@@ -181,9 +181,10 @@ class ZmqKernelSession(
             hb.connect("tcp://127.0.0.1:$hbPort")
             hbSocket = hb
 
-            // 5. Start background listeners for IOPub and Shell channels
+            // 5. Start background listeners for IOPub, Shell, and Heartbeat channels
             startIopubListener(iopub)
             startShellListener(shell)
+            startHeartbeatWatchdog(hb)
             bootstrapKernel()
 
             _status.value = KernelStatus.IDLE
@@ -423,6 +424,36 @@ class ZmqKernelSession(
                         val outputs = executionOutputs[parentMsgId]?.toList() ?: emptyList()
                         deferred?.complete(ExecutionResult(count, isOk, outputs))
                     }
+                }
+            }
+        }
+    }
+
+    private fun startHeartbeatWatchdog(hb: ZMQ.Socket) {
+        sessionScope.launch(Dispatchers.IO) {
+            val pingPayload = "PING".toByteArray(Charsets.UTF_8)
+            var consecutiveFailures = 0
+            while (isActive) {
+                delay(3000)
+                if (kernelProcess == null || kernelProcess?.isAlive != true) break
+                val sent = runCatching { hb.send(pingPayload, 0) }.getOrDefault(false)
+                if (sent) {
+                    val reply = runCatching { hb.recv(0) }.getOrNull()
+                    if (reply != null && reply.contentEquals(pingPayload)) {
+                        consecutiveFailures = 0
+                        if (_status.value == KernelStatus.UNRESPONSIVE) {
+                            _status.value = KernelStatus.IDLE
+                        }
+                    } else {
+                        consecutiveFailures++
+                    }
+                } else {
+                    consecutiveFailures++
+                }
+
+                if (consecutiveFailures >= 3 && _status.value != KernelStatus.DEAD) {
+                    LOG.warn("Kernel heartbeat missed $consecutiveFailures pings - marking UNRESPONSIVE")
+                    _status.value = KernelStatus.UNRESPONSIVE
                 }
             }
         }

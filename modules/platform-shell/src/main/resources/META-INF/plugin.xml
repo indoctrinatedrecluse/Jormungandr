@@ -34,6 +34,24 @@
         <!-- Universal Theme Providers -->
         <themeProvider id="org.jormungandr.theme.solarized.light" path="/themes/SolarizedLight.theme.json"/>
         <themeProvider id="org.jormungandr.theme.bubblegum.barbie" path="/themes/BubblegumBarbie.theme.json"/>
+        <themeProvider id="org.jormungandr.theme.nordic.deep.ocean" path="/themes/NordicDeepOcean.theme.json"/>
+
+        <!-- Offline & Air-Gapped Mode Service -->
+        <applicationService serviceImplementation="org.jormungandr.shell.offline.OfflineModeService"/>
+
+        <!-- Model Hub Explorer (Hugging Face & Ollama) -->
+        <toolWindow id="Model Hub"
+                    anchor="right"
+                    canCloseContent="true"
+                    icon="/icons/jormungandr_16.png"
+                    factoryClass="org.jormungandr.shell.modelhub.ModelHubToolWindowFactory"/>
+
+        <!-- Lazy Query Execution Plan Visualizer -->
+        <toolWindow id="Query Plan Visualizer"
+                    anchor="bottom"
+                    canCloseContent="true"
+                    icon="/icons/jormungandr_16.png"
+                    factoryClass="org.jormungandr.shell.lineage.LazyExecutionPlanToolWindowFactory"/>
 
         <!-- R Language & Statistical REPL Subsystem -->
         <applicationService serviceImplementation="org.jormungandr.shell.r.RDiscoveryService"/>
@@ -161,7 +179,58 @@
                     description="Auto-generate pytest unit tests with mock DataFrame fixtures"/>
         </group>
 
+        <!-- Quickstart & Welcome Actions -->
+        <action id="Jormungandr.OpenSampleProject"
+                class="org.jormungandr.shell.samples.OpenSampleProjectAction"
+                text="Open Sample Data Science Project..."
+                description="Explore bundled end-to-end data science, Polars, DuckDB, and PyTorch workflows"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="FileMenu" anchor="after" relative-to-action="Jormungandr.NewDataScienceProject"/>
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="after" relative-to-action="OpenProject"/>
+        </action>
+
+        <action id="Jormungandr.QuickOpenDataset"
+                class="org.jormungandr.shell.project.QuickOpenDatasetAction"
+                text="Quick Open Dataset (CSV, Parquet, Arrow)..."
+                description="Instantly preview tabular and columnar datasets without creating a project"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="FileMenu" anchor="after" relative-to-action="Jormungandr.OpenSampleProject"/>
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="after" relative-to-action="Jormungandr.OpenSampleProject"/>
+        </action>
+
+        <action id="Jormungandr.OpenTerminal"
+                class="org.jormungandr.shell.terminal.OpenJormungandrTerminalAction"
+                text="Jörmungandr Data Terminal..."
+                description="Launch integrated terminal with auto-detected Python/uv/conda virtual environment"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Jormungandr.Tools.PromptStudio"/>
+        </action>
+
+        <action id="Jormungandr.ToggleOfflineMode"
+                class="org.jormungandr.shell.offline.ToggleOfflineModeAction"
+                text="Air-Gapped / Offline Mode"
+                description="Toggle offline mode to prevent outbound network telemetry and prioritize local ML models"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Jormungandr.OpenTerminal"/>
+        </action>
+
+        <action id="Jormungandr.MemoryTuner"
+                class="org.jormungandr.shell.memory.MemoryTunerAction"
+                text="Memory &amp; JVM Optimization Tuner..."
+                description="Inspect memory usage and tune JVM heap presets for heavy data science workloads"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="Jormungandr.Help.About"/>
+        </action>
+
         <!-- Help Menu Action -->
+        <action id="Jormungandr.CheckForUpdates"
+                class="org.jormungandr.shell.update.CheckForUpdatesAction"
+                text="Check for Jörmungandr Updates..."
+                description="Check GitHub for new Jörmungandr releases and smart delta patches"
+                icon="/icons/jormungandr_16.png">
+            <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="Jormungandr.Help.About"/>
+        </action>
+
         <action id="Jormungandr.Tools.ManageLicense"
                 class="org.jormungandr.shell.license.ManageLicenseAction"
                 text="Manage Jörmungandr License..."

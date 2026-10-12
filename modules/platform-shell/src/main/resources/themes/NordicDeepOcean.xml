@@ -1,0 +1,62 @@
+<scheme name="Nordic Deep Ocean" version="142" parent_scheme="Darcula">
+  <metaInfo>
+    <property name="created">2026-10-12</property>
+    <property name="ide">Jormungandr</property>
+    <property name="ideVersion">1.4.0</property>
+  </metaInfo>
+  <colors>
+    <option name="CARET_COLOR" value="88c0d0" />
+    <option name="CARET_ROW_COLOR" value="131e30" />
+    <option name="GUTTER_BACKGROUND" value="0b1320" />
+    <option name="INDENT_GUIDE" value="1e293b" />
+    <option name="LINE_NUMBERS_COLOR" value="64748b" />
+    <option name="SELECTION_BACKGROUND" value="203047" />
+    <option name="SELECTION_FOREGROUND" value="eceff4" />
+  </colors>
+  <attributes>
+    <option name="TEXT">
+      <value>
+        <option name="FOREGROUND" value="d8dee9" />
+        <option name="BACKGROUND" value="0b1320" />
+      </value>
+    </option>
+    <option name="DEFAULT_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="81a1c1" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="DEFAULT_STRING">
+      <value>
+        <option name="FOREGROUND" value="a3be8c" />
+      </value>
+    </option>
+    <option name="DEFAULT_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="b48ead" />
+      </value>
+    </option>
+    <option name="DEFAULT_LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="64748b" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="DEFAULT_FUNCTION_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="88c0d0" />
+      </value>
+    </option>
+    <option name="DEFAULT_IDENTIFIER">
+      <value>
+        <option name="FOREGROUND" value="d8dee9" />
+      </value>
+    </option>
+    <option name="DEFAULT_DOC_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="64748b" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+  </attributes>
+</scheme>

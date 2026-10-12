@@ -53,6 +53,7 @@ class DuckDbLakehousePanel(
     private val catalogList = JBList(catalogListModel)
 
     private var lastResult: DuckDbLakehouseResult? = null
+    private val queryHistory = mutableListOf<String>()
 
     init {
         buildUi()
@@ -98,6 +99,58 @@ class DuckDbLakehousePanel(
             }
         }
         leftTools.add(templateCombo)
+
+        val browseFileBtn = JButton("📂 Browse File...").apply {
+            isFocusable = false
+            toolTipText = "Browse and insert local Parquet, CSV, or Arrow dataset into SQL query"
+            addActionListener {
+                val chooser = JFileChooser().apply {
+                    dialogTitle = "Select Dataset for DuckDB Lakehouse"
+                    fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
+                        "Supported Datasets (*.parquet, *.csv, *.json, *.arrow)",
+                        "parquet", "csv", "json", "arrow"
+                    )
+                }
+                if (chooser.showOpenDialog(this@DuckDbLakehousePanel) == JFileChooser.APPROVE_OPTION) {
+                    val file = chooser.selectedFile
+                    val cleanPath = file.absolutePath.replace('\\', '/')
+                    val ext = file.extension.lowercase()
+                    val query = when (ext) {
+                        "parquet" -> "SELECT * FROM read_parquet('$cleanPath') LIMIT 100;"
+                        "csv" -> "SELECT * FROM read_csv_auto('$cleanPath') LIMIT 100;"
+                        "json" -> "SELECT * FROM read_json_auto('$cleanPath') LIMIT 100;"
+                        else -> "SELECT * FROM '$cleanPath' LIMIT 100;"
+                    }
+                    sqlEditor.text = query
+                    sqlEditor.requestFocus()
+                }
+            }
+        }
+        leftTools.add(browseFileBtn)
+
+        val historyBtn = JButton("📜 History").apply {
+            isFocusable = false
+            toolTipText = "Recall recently executed SQL queries"
+            addActionListener {
+                if (queryHistory.isEmpty()) {
+                    JOptionPane.showMessageDialog(this@DuckDbLakehousePanel, "No executed query history yet.", "Query History", JOptionPane.INFORMATION_MESSAGE)
+                    return@addActionListener
+                }
+                val menu = JPopupMenu()
+                for (pastQuery in queryHistory.takeLast(10).reversed()) {
+                    val preview = if (pastQuery.length > 50) pastQuery.take(47) + "..." else pastQuery
+                    val item = JMenuItem(preview.replace('\n', ' ')).apply {
+                        toolTipText = pastQuery
+                        addActionListener {
+                            sqlEditor.text = pastQuery
+                        }
+                    }
+                    menu.add(item)
+                }
+                menu.show(this, 0, height)
+            }
+        }
+        leftTools.add(historyBtn)
 
         val syncBtn = JButton("🔄 Sync DataFrames").apply {
             isFocusable = false
@@ -150,14 +203,32 @@ class DuckDbLakehousePanel(
         }
         rightTools.add(pipePlotBtn)
 
-        val copyPythonBtn = JButton("🐍 Copy Python").apply {
+        val copyPythonBtn = JButton("🐍 Export Code").apply {
             isFocusable = false
-            toolTipText = "Copy equivalent duckdb.sql(...) Python snippet to clipboard"
+            toolTipText = "Export query as Python (DuckDB & Polars) code to clipboard"
             addActionListener {
                 val sql = sqlEditor.text.trim().replace("\"", "\\\"")
-                val py = "import duckdb\n\nres = duckdb.sql(\"\"\"\n$sql\n\"\"\")\nprint(res.show())\ndf = res.to_df()"
+                val py = """
+# Jörmungandr Generated Lakehouse Script
+import duckdb
+import polars as pl
+
+# 1. Execute via embedded DuckDB engine
+conn = duckdb.connect()
+query = \"\"\"
+$sql
+\"\"\"
+res = conn.sql(query)
+df_pandas = res.to_df()
+print("DuckDB Results:")
+print(df_pandas.head())
+
+# 2. Convert to Polars for high-speed columnar execution
+df_polars = pl.from_pandas(df_pandas)
+print(f"Polars DataFrame shape: {df_polars.shape}")
+""".trimIndent()
                 Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(py), null)
-                statusLabel.text = "Copied Python DuckDB snippet to clipboard."
+                statusLabel.text = "Copied Python DuckDB & Polars code to clipboard."
             }
         }
         rightTools.add(copyPythonBtn)
@@ -289,6 +360,11 @@ class DuckDbLakehousePanel(
             )
             return
         }
+
+        if (queryHistory.contains(sql)) {
+            queryHistory.remove(sql)
+        }
+        queryHistory.add(sql)
 
         statusLabel.text = "Executing DuckDB analytical query..."
 

@@ -1,0 +1,111 @@
+{
+  "name": "Nordic Deep Ocean",
+  "author": "indoctrinatedrecluse",
+  "dark": true,
+  "editorScheme": "/themes/NordicDeepOcean.xml",
+  "colors": {
+    "background": "#0B1320",
+    "foreground": "#D8DEE9",
+    "primary": "#88C0D0",
+    "secondary": "#8FBCBB",
+    "accent": "#88C0D0",
+    "border": "#1E293B",
+    "selectionBackground": "#203047",
+    "selectionForeground": "#ECEFF4"
+  },
+  "ui": {
+    "*": {
+      "background": "#0B1320",
+      "foreground": "#D8DEE9",
+      "inactiveForeground": "#64748B",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4",
+      "selectionInactiveBackground": "#162234",
+      "selectionInactiveForeground": "#94A3B8",
+      "borderColor": "#1E293B",
+      "separatorColor": "#1E293B"
+    },
+    "Borders": {
+      "color": "#1E293B",
+      "ContrastBorderColor": "#334155"
+    },
+    "Button": {
+      "startBackground": "#162234",
+      "endBackground": "#162234",
+      "startBorderColor": "#334155",
+      "endBorderColor": "#334155",
+      "focusedBorderColor": "#88C0D0",
+      "foreground": "#D8DEE9",
+      "default": {
+        "startBackground": "#0284C7",
+        "endBackground": "#0284C7",
+        "foreground": "#FFFFFF",
+        "focusedBorderColor": "#38BDF8"
+      }
+    },
+    "ComboBox": {
+      "background": "#0F1A2C",
+      "nonEditableBackground": "#0F1A2C",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    },
+    "Editor": {
+      "background": "#0B1320",
+      "foreground": "#D8DEE9",
+      "shortcutForeground": "#88C0D0"
+    },
+    "EditorTabs": {
+      "background": "#070E18",
+      "underlinedTabBackground": "#0B1320",
+      "underlineColor": "#88C0D0",
+      "underlineHeight": 2,
+      "inactiveUnderlineColor": "#1E293B"
+    },
+    "List": {
+      "background": "#0B1320",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    },
+    "Menu": {
+      "background": "#0F1A2C",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    },
+    "PopupMenu": {
+      "background": "#0F1A2C",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    },
+    "StatusBar": {
+      "background": "#070E18",
+      "borderColor": "#1E293B"
+    },
+    "Table": {
+      "background": "#0B1320",
+      "alternateRowColor": "#0F1A2C",
+      "gridColor": "#1E293B",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    },
+    "TableHeader": {
+      "background": "#131E30",
+      "foreground": "#94A3B8",
+      "separatorColor": "#1E293B"
+    },
+    "ToolWindow": {
+      "Header": {
+        "background": "#0F1A2C",
+        "borderColor": "#1E293B"
+      },
+      "Button": {
+        "selectedBackground": "#203047",
+        "selectedForeground": "#ECEFF4"
+      }
+    },
+    "Tree": {
+      "background": "#0B1320",
+      "selectionBackground": "#203047",
+      "selectionForeground": "#ECEFF4"
+    }
+  }
+}

@@ -385,6 +385,10 @@ class NotebookPanel(
                 kernelStatusLabel.text = "🟡 Restarting..."
                 kernelStatusLabel.foreground = Color(181, 137, 0)
             }
+            KernelStatus.UNRESPONSIVE -> {
+                kernelStatusLabel.text = "⚠️ Unresponsive"
+                kernelStatusLabel.foreground = Color(211, 54, 130) // Magenta/Pink warning
+            }
             KernelStatus.DEAD, KernelStatus.DISCONNECTED -> {
                 kernelStatusLabel.text = "🔴 Stopped"
                 kernelStatusLabel.foreground = Color(220, 50, 47) // Red

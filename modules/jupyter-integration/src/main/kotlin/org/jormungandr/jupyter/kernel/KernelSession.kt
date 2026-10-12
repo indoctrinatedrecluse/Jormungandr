@@ -12,6 +12,7 @@ enum class KernelStatus(val displayName: String, val isRunning: Boolean) {
     STARTING("Starting...", true),
     IDLE("Idle", true),
     BUSY("Busy", true),
+    UNRESPONSIVE("Unresponsive", true),
     RESTARTING("Restarting...", true),
     DEAD("Dead / Error", false)
 }

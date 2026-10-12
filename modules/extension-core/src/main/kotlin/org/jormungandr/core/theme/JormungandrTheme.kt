@@ -199,5 +199,59 @@ data class JormungandrTheme(
                 "#FFB6C1"  // Light pink
             )
         )
+
+        /**
+         * "Nordic Deep Ocean" theme inspired by Arctic seas:
+         * Deep navy midnight backgrounds, frost cyan and seafoam green syntax accents.
+         */
+        val NORDIC_DEEP_OCEAN = JormungandrTheme(
+            id = "nordic.deep.ocean",
+            name = "Nordic Deep Ocean",
+            isDark = true,
+            colors = ColorTokens(
+                background = "#0B1320",
+                secondaryBackground = "#131E30",
+                surface = "#0F1A2C",
+                foreground = "#D8DEE9",
+                mutedForeground = "#64748B",
+                border = "#1E293B",
+                accent = "#88C0D0",
+                accentHover = "#8FBCBB",
+                selectionBackground = "#203047",
+                selectionForeground = "#ECEFF4",
+                error = "#BF616A",
+                warning = "#EBCB8B",
+                success = "#A3BE8C",
+                info = "#81A1C1"
+            ),
+            dataGrid = DataGridThemeTokens(
+                headerBackground = "#131E30",
+                headerForeground = "#94A3B8",
+                rowEvenBackground = "#0B1320",
+                rowOddBackground = "#0F1A2C",
+                gridLineColor = "#1E293B",
+                selectionBackground = "#203047",
+                selectionForeground = "#ECEFF4"
+            ),
+            syntax = SyntaxThemeTokens(
+                keyword = "#81A1C1",
+                string = "#A3BE8C",
+                number = "#B48EAD",
+                comment = "#64748B",
+                function = "#88C0D0",
+                variable = "#D8DEE9",
+                type = "#8FBCBB"
+            ),
+            chartPalette = listOf(
+                "#88C0D0", // Frost cyan
+                "#8FBCBB", // Seafoam
+                "#81A1C1", // Glacial blue
+                "#5E81AC", // Deep polar blue
+                "#A3BE8C", // Arctic green
+                "#EBCB8B", // Aurora yellow
+                "#D08770", // Aurora orange
+                "#B48EAD"  // Aurora purple
+            )
+        )
     }
 }

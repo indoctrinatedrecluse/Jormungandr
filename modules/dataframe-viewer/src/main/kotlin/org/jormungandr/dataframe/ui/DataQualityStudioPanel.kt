@@ -107,8 +107,43 @@ class DataQualityStudioPanel(
             }
         }
 
+        val exportEdaBtn = JButton("📊 Export EDA HTML Report...").apply {
+            isFocusable = false
+            toolTipText = "Generate a self-contained responsive HTML exploratory data analysis report"
+            addActionListener {
+                if (dataFrame.isEmpty) {
+                    JOptionPane.showMessageDialog(this, "Dataset is empty.", "EDA Generator", JOptionPane.WARNING_MESSAGE)
+                    return@addActionListener
+                }
+                val chooser = JFileChooser().apply {
+                    dialogTitle = "Save Jörmungandr EDA Report"
+                    selectedFile = java.io.File("${dataFrame.name.ifBlank { "dataset" }}_eda_report.html")
+                }
+                if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    val file = chooser.selectedFile
+                    try {
+                        val html = EdaReportGenerator.generateHtmlReport(dataFrame)
+                        file.writeText(html, Charsets.UTF_8)
+                        val openChoice = JOptionPane.showConfirmDialog(
+                            this,
+                            "EDA Report saved successfully to:\n${file.absolutePath}\n\nWould you like to open it in your browser?",
+                            "EDA Report Generated",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE
+                        )
+                        if (openChoice == JOptionPane.YES_OPTION && Desktop.isDesktopSupported()) {
+                            Desktop.getDesktop().open(file)
+                        }
+                    } catch (e: Exception) {
+                        JOptionPane.showMessageDialog(this, "Failed to save EDA report: ${e.message}", "Error", JOptionPane.ERROR_MESSAGE)
+                    }
+                }
+            }
+        }
+
         rightHeader.add(refreshBtn)
         rightHeader.add(exportPanderaBtn)
+        rightHeader.add(exportEdaBtn)
 
         header.add(leftHeader, BorderLayout.WEST)
         header.add(rightHeader, BorderLayout.EAST)

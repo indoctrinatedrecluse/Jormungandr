@@ -30,6 +30,11 @@ class UpdateCheckService {
         onResult: (UpdateInfo?) -> Unit,
         onError: (Throwable) -> Unit = {}
     ) {
+        if (org.jormungandr.shell.offline.OfflineModeService.getInstance().isOfflineModeEnabled) {
+            LOG.info("Offline / Air-Gapped mode active - skipping update check.")
+            onResult(null)
+            return
+        }
         ApplicationManager.getApplication().executeOnPooledThread {
             try {
                 val url = URI("https://api.github.com/repos/${AppVersion.REPO_OWNER}/${AppVersion.REPO_NAME}/releases/latest").toURL()
