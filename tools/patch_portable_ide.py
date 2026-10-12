@@ -50,8 +50,11 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     print(" -> Creating lib/jormungandr-bootstrap.jar...")
     svg_path = os.path.join(resources_dir, 'icons', 'jormungandr.svg')
     svg16_path = os.path.join(resources_dir, 'icons', 'jormungandr_16.svg')
+    logo64_path = os.path.join(resources_dir, 'icons', 'jormungandr_64.png')
     splash_path = os.path.join(resources_dir, 'splash', 'splash.png')
     splash2x_path = os.path.join(resources_dir, 'splash', 'splash@2x.png')
+
+    logo64_data = open(logo64_path, 'rb').read() if os.path.exists(logo64_path) else None
 
     with zipfile.ZipFile(bootstrap_jar, 'w', compression=zipfile.ZIP_DEFLATED) as z:
         z.writestr('idea/IdeaApplicationInfo.xml', app_info_xml.encode('utf-8'))
@@ -67,6 +70,10 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
                 svg16_data = f.read()
                 z.writestr('idea-ce_16.svg', svg16_data)
                 z.writestr('icons/jormungandr_16.svg', svg16_data)
+
+        if logo64_data:
+            z.writestr('idea_logo_welcome.png', logo64_data)
+            z.writestr('icons/jormungandr_64.png', logo64_data)
 
         if os.path.exists(splash_path):
             with open(splash_path, 'rb') as f:
@@ -131,6 +138,7 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
             'idea/IdeaApplicationInfo.xml',
             'idea_community_logo.png',
             'idea_community_logo@2x.png',
+            'idea_logo_welcome.png',
             'splash/splash.png',
             'splash/splash@2x.png',
             'icons/jormungandr.svg',
@@ -163,8 +171,49 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
             if icon16_data:
                 zout.writestr('icons/jormungandr_16.svg', icon16_data)
                 zout.writestr('idea-ce_16.svg', icon16_data)
+            if logo64_data:
+                zout.writestr('idea_logo_welcome.png', logo64_data)
+                zout.writestr('icons/jormungandr_64.png', logo64_data)
+                print("    [+] Injected Jörmungandr welcome logo into app.jar")
 
         shutil.move(tmp_app_jar, app_jar)
+
+    # 1.6.5 Patch lib/app-client.jar for Welcome Screen branding & icons
+    client_jar = os.path.join(staging_dir, "lib", "app-client.jar")
+    if os.path.exists(client_jar):
+        print(" -> Patching lib/app-client.jar for Welcome Screen...")
+        tmp_client_jar = client_jar + ".tmp"
+        with zipfile.ZipFile(client_jar, 'r') as zin, zipfile.ZipFile(tmp_client_jar, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                if item.filename in ['idea_logo_welcome.png', 'messages/IdeBundle.properties', '__index__']:
+                    continue
+                zout.writestr(item, zin.read(item.filename))
+
+            if logo64_data:
+                zout.writestr('idea_logo_welcome.png', logo64_data)
+                zout.writestr('icons/jormungandr_64.png', logo64_data)
+                print("    [+] Replaced idea_logo_welcome.png in app-client.jar")
+            if icon_data:
+                zout.writestr('icons/jormungandr.svg', icon_data)
+                zout.writestr('idea-ce.svg', icon_data)
+            if icon16_data:
+                zout.writestr('icons/jormungandr_16.svg', icon16_data)
+                zout.writestr('idea-ce_16.svg', icon16_data)
+
+            # Patch messages/IdeBundle.properties
+            try:
+                bundle_bytes = zin.read('messages/IdeBundle.properties')
+                bundle_text = bundle_bytes.decode('utf-8')
+                bundle_text = bundle_text.replace('label.welcome.to.0=Welcome to {0}', 'label.welcome.to.0=Welcome to J\\u00f6rmungandr')
+                bundle_text = bundle_text.replace('welcome.screen.logo.version.label=Version {0}', 'welcome.screen.logo.version.label=J\\u00f6rmungandr Studio {0}')
+                bundle_text = bundle_text.replace('welcome.screen.check.for.updates.comment=\\ for updates now.', 'welcome.screen.check.for.updates.comment=\\ for J\\u00f6rmungandr updates now.')
+                bundle_text = bundle_text.replace('welcome.screen.empty.projects.create.comment= Create a new project to start from scratch.', 'welcome.screen.empty.projects.create.comment= Create a new J\\u00f6rmungandr project to start from scratch.')
+                bundle_text = bundle_text.replace('welcome.screen.empty.projects.open.comment=Open existing project from disk or version control.', 'welcome.screen.empty.projects.open.comment=Open existing project in J\\u00f6rmungandr.')
+                zout.writestr('messages/IdeBundle.properties', bundle_text.encode('utf-8'))
+                print("    [+] Patched messages/IdeBundle.properties in app-client.jar with Jörmungandr strings")
+            except KeyError:
+                pass
+        shutil.move(tmp_client_jar, client_jar)
 
     # 1.7 Ensure Jörmungandr plugins are deployed into portable-data/plugins, jormungandr-plugins, and plugins
     plugins_dir = os.path.join(staging_dir, "plugins")

@@ -21,4 +21,12 @@ class JormungandrShutdownListenerTest {
             listener.appWillBeClosed(true)
         }
     }
+
+    @Test
+    fun testWelcomeScreenDisplayedDoesNotThrow() {
+        val listener = JormungandrShutdownListener()
+        assertDoesNotThrow {
+            listener.welcomeScreenDisplayed()
+        }
+    }
 }

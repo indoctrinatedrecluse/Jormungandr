@@ -94,4 +94,41 @@ class JormungandrBrandingTest {
         val permission = isSendingAllowedMethod.invoke(instance)
         assertNotNull(permission, "isSendingUsageStatsAllowed() must return valid Permission enum without NPE")
     }
+
+    @Test
+    fun `test dynamic rebranding catches lazily added Welcome Screen components`() {
+        val frame = JFrame("Welcome")
+        frame.contentPane.layout = java.awt.BorderLayout()
+
+        SwingUtilities.invokeAndWait {
+            JormungandrBranding.brandWindow(frame)
+        }
+
+        val lazyPanel = JPanel()
+        val lazyTitle = JLabel("Welcome to IntelliJ IDEA")
+        val lazyEditor = javax.swing.JEditorPane()
+        lazyEditor.text = "Open existing project in IntelliJ IDEA"
+        lazyPanel.add(lazyTitle)
+        lazyPanel.add(lazyEditor)
+
+        SwingUtilities.invokeAndWait {
+            frame.contentPane.add(lazyPanel, java.awt.BorderLayout.CENTER)
+            frame.contentPane.revalidate()
+        }
+
+        SwingUtilities.invokeAndWait {
+            assertEquals("Welcome to Jörmungandr", lazyTitle.text, "Lazily added title label must be dynamically rebranded")
+            assertEquals("Open existing project in Jörmungandr", lazyEditor.text, "Lazily added editor text must be dynamically rebranded")
+        }
+    }
+
+    @Test
+    fun `test rebrandSingleComponent replaces welcome logo icon`() {
+        val logoLabel = JLabel()
+        logoLabel.name = "productIcon"
+        assertNull(logoLabel.icon)
+
+        JormungandrBranding.rebrandSingleComponent(logoLabel)
+        assertNotNull(logoLabel.icon, "Logo label icon must be populated with Jörmungandr icon")
+    }
 }

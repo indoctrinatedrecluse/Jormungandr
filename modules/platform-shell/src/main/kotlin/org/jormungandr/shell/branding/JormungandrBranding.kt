@@ -34,7 +34,11 @@ object JormungandrBranding {
     const val MOTTO = "The Modular IDE for Data Science & Analytics"
 
     private val REPLACEMENT_MAP = listOf(
+        "Welcome to IntelliJ IDEA Community Edition" to "Welcome to $PRODUCT_NAME",
+        "Welcome to IntelliJ IDEA Ultimate Edition" to "Welcome to $PRODUCT_NAME",
+        "Welcome to IntelliJ IDEA Ultimate" to "Welcome to $PRODUCT_NAME",
         "Welcome to IntelliJ IDEA" to "Welcome to $PRODUCT_NAME",
+        "Welcome to IntelliJ" to "Welcome to $PRODUCT_NAME",
         "IntelliJ IDEA Community Edition" to PRODUCT_NAME,
         "IntelliJ IDEA Ultimate Edition" to PRODUCT_NAME,
         "IntelliJ IDEA Ultimate" to PRODUCT_NAME,
@@ -103,31 +107,68 @@ object JormungandrBranding {
      * logos, URLs, and copyright dates.
      */
     fun patchApplicationInfo() {
+        val targets = mutableListOf<Any>()
         try {
             val appInfoClass = Class.forName("com.intellij.openapi.application.impl.ApplicationInfoImpl")
             val getShadow = appInfoClass.getMethod("getShadowInstance")
-            val instance = getShadow.invoke(null) ?: return
-
-            setFieldValue(appInfoClass, instance, "myCompanyName", COMPANY_NAME)
-            setFieldValue(appInfoClass, instance, "myShortCompanyName", COMPANY_NAME)
-            setFieldValue(appInfoClass, instance, "myCompanyUrl", COMPANY_URL)
-            setFieldValue(appInfoClass, instance, "myCopyrightStart", "2025")
-            setFieldValue(appInfoClass, instance, "splashImageUrl", "/splash/splash.png")
-            setFieldValue(appInfoClass, instance, "eapSplashImageUrl", "/splash/splash.png")
-            setFieldValue(appInfoClass, instance, "svgIconUrl", "/icons/jormungandr.svg")
-            setFieldValue(appInfoClass, instance, "mySvgEapIconUrl", "/icons/jormungandr.svg")
-            setFieldValue(appInfoClass, instance, "mySmallSvgIconUrl", "/icons/jormungandr_16.svg")
-            setFieldValue(appInfoClass, instance, "mySmallSvgEapIconUrl", "/icons/jormungandr_16.svg")
-            setFieldValue(appInfoClass, instance, "myWelcomeScreenLogoUrl", "/icons/jormungandr_64.png")
-            setFieldValue(appInfoClass, instance, "myProductUrl", COMPANY_URL)
-            setFieldValue(appInfoClass, instance, "myDocumentationUrl", "$COMPANY_URL#readme")
-            setFieldValue(appInfoClass, instance, "mySupportUrl", "$COMPANY_URL/issues")
-            setFieldValue(appInfoClass, instance, "myFeedbackUrl", "$COMPANY_URL/issues")
-            setFieldValue(appInfoClass, instance, "myYoutrackUrl", "$COMPANY_URL/issues")
-
-            LOG.info("Successfully patched ApplicationInfoImpl to '$COMPANY_NAME' ($COMPANY_URL).")
+            val shadowInstance = getShadow.invoke(null)
+            if (shadowInstance != null) {
+                targets.add(shadowInstance)
+            }
         } catch (e: Throwable) {
-            LOG.warn("Could not patch ApplicationInfoImpl", e)
+            LOG.warn("Could not get ApplicationInfoImpl.getShadowInstance()", e)
+        }
+
+        try {
+            val appClass = Class.forName("com.intellij.openapi.application.ApplicationManager")
+            val getApp = appClass.getMethod("getApplication")
+            val app = getApp.invoke(null)
+            if (app != null) {
+                val appInfoInterface = Class.forName("com.intellij.openapi.application.ApplicationInfo")
+                val getService = app.javaClass.getMethod("getService", Class::class.java)
+                val serviceInstance = getService.invoke(app, appInfoInterface)
+                if (serviceInstance != null && !targets.contains(serviceInstance)) {
+                    targets.add(serviceInstance)
+                }
+            }
+        } catch (_: Throwable) {
+            // Application not initialized yet or running outside full container
+        }
+
+        try {
+            val appInfoExClass = Class.forName("com.intellij.openapi.application.ex.ApplicationInfoEx")
+            val getInstanceEx = appInfoExClass.getMethod("getInstanceEx")
+            val instanceEx = getInstanceEx.invoke(null)
+            if (instanceEx != null && !targets.contains(instanceEx)) {
+                targets.add(instanceEx)
+            }
+        } catch (_: Throwable) {
+            // ApplicationInfoEx not initialized yet
+        }
+
+        for (target in targets) {
+            try {
+                val targetClass = target.javaClass
+                setFieldValue(targetClass, target, "myCompanyName", COMPANY_NAME)
+                setFieldValue(targetClass, target, "myShortCompanyName", COMPANY_NAME)
+                setFieldValue(targetClass, target, "myCompanyUrl", COMPANY_URL)
+                setFieldValue(targetClass, target, "myCopyrightStart", "2025")
+                setFieldValue(targetClass, target, "splashImageUrl", "/splash/splash.png")
+                setFieldValue(targetClass, target, "eapSplashImageUrl", "/splash/splash.png")
+                setFieldValue(targetClass, target, "svgIconUrl", "/icons/jormungandr.svg")
+                setFieldValue(targetClass, target, "mySvgEapIconUrl", "/icons/jormungandr.svg")
+                setFieldValue(targetClass, target, "mySmallSvgIconUrl", "/icons/jormungandr_16.svg")
+                setFieldValue(targetClass, target, "mySmallSvgEapIconUrl", "/icons/jormungandr_16.svg")
+                setFieldValue(targetClass, target, "myWelcomeScreenLogoUrl", "/icons/jormungandr_64.png")
+                setFieldValue(targetClass, target, "myProductUrl", COMPANY_URL)
+                setFieldValue(targetClass, target, "myDocumentationUrl", "$COMPANY_URL#readme")
+                setFieldValue(targetClass, target, "mySupportUrl", "$COMPANY_URL/issues")
+                setFieldValue(targetClass, target, "myFeedbackUrl", "$COMPANY_URL/issues")
+                setFieldValue(targetClass, target, "myYoutrackUrl", "$COMPANY_URL/issues")
+                LOG.info("Successfully patched ApplicationInfo instance (${targetClass.name}) to '$COMPANY_NAME'.")
+            } catch (e: Throwable) {
+                LOG.warn("Could not patch ApplicationInfo target ${target.javaClass.name}", e)
+            }
         }
     }
 
@@ -270,6 +311,40 @@ object JormungandrBranding {
     }
 
     /**
+     * Set of monitored containers to ensure ContainerListener is attached at most once per container.
+     */
+    private val monitoredContainers = java.util.Collections.newSetFromMap(java.util.WeakHashMap<Container, Boolean>())
+
+    /**
+     * Recursively attaches container listeners so any lazily added components
+     * (e.g. TabbedWelcomeScreen cards, EmptyStateProjectsPanel, dynamically loaded toolbars)
+     * are automatically rebranded immediately when attached to the hierarchy.
+     */
+    private fun attachDynamicRebrandingListener(container: Container) {
+        if (!monitoredContainers.add(container)) return
+
+        container.addContainerListener(object : java.awt.event.ContainerListener {
+            override fun componentAdded(e: java.awt.event.ContainerEvent) {
+                val child = e.child
+                if (child is Container) {
+                    attachDynamicRebrandingListener(child)
+                    rebrandComponents(child)
+                } else if (child != null) {
+                    rebrandSingleComponent(child)
+                }
+            }
+
+            override fun componentRemoved(e: java.awt.event.ContainerEvent) {}
+        })
+
+        for (comp in container.components) {
+            if (comp is Container) {
+                attachDynamicRebrandingListener(comp)
+            }
+        }
+    }
+
+    /**
      * Brands a specific Window instance (title bar icon, title text, and child UI elements).
      */
     fun brandWindow(win: Window) {
@@ -280,6 +355,10 @@ object JormungandrBranding {
         if (com.intellij.openapi.application.ApplicationManager.getApplication()?.isDisposed == true) {
             return
         }
+        val isWelcomeFrame = className.contains("Welcome") ||
+                (win.javaClass.interfaces.any { it.name.contains("IdeFrame") } &&
+                 runCatching { win.javaClass.getMethod("getProject").invoke(win) == null }.getOrDefault(false))
+
         SwingUtilities.invokeLater {
             try {
                 if (com.intellij.openapi.application.ApplicationManager.getApplication()?.isDisposed == true) {
@@ -295,7 +374,11 @@ object JormungandrBranding {
                 if (win is Frame) {
                     val currentTitle = win.title
                     if (currentTitle != null) {
-                        var rebranded = rebrandText(currentTitle)
+                        var rebranded = if (isWelcomeFrame) {
+                            "Welcome to $PRODUCT_NAME"
+                        } else {
+                            rebrandText(currentTitle)
+                        }
                         val license = runCatching { org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value }.getOrNull()
                         val tag = when (license?.licenseType) {
                             org.jormungandr.core.license.LicenseType.ADMIN -> " [👑 ADMIN PRIVILEGED]"
@@ -321,8 +404,25 @@ object JormungandrBranding {
                     }
                 }
 
-                // 3. Rebrand child components
+                // 3. Attach dynamic container listener to capture lazily loaded cards and empty panels
+                attachDynamicRebrandingListener(win)
+
+                // 4. Rebrand child components
                 rebrandComponents(win)
+
+                // 5. If this is a Welcome Frame, schedule delayed rebrand sweeps to catch async card transitions
+                if (isWelcomeFrame) {
+                    val delays = intArrayOf(150, 400, 1000, 2500)
+                    for (delay in delays) {
+                        val timer = Timer(delay) {
+                            if (win.isDisplayable) {
+                                rebrandComponents(win)
+                            }
+                        }
+                        timer.isRepeats = false
+                        timer.start()
+                    }
+                }
             } catch (e: Throwable) {
                 LOG.warn("Could not brand window: ${win.javaClass.name}", e)
             }
@@ -349,7 +449,95 @@ object JormungandrBranding {
     }
 
     /**
-     * Recursively traverses a component container to substitute upstream branding substrings.
+     * Inspects and rebrands an individual UI component (label, text pane, button, tooltip).
+     */
+    fun rebrandSingleComponent(comp: Component) {
+        when (comp) {
+            is JLabel -> {
+                val text = comp.text
+                if (text != null && text.isNotEmpty()) {
+                    val rebranded = rebrandText(text)
+                    if (rebranded != text) {
+                        comp.text = rebranded
+                    }
+                }
+                val compClass = comp.javaClass.name
+                val accessibleName = comp.accessibleContext?.accessibleName
+                val isWelcomeLogo = compClass.contains("WelcomeScreenComponentFactory") ||
+                        compClass.contains("createSmallLogo") ||
+                        compClass.contains("createLogo") ||
+                        accessibleName == "Application icon" ||
+                        compClass.contains("CustomHeader") ||
+                        compClass.contains("createProductIcon") ||
+                        comp.name == "productIcon" ||
+                        comp.name == "welcomeLogo"
+
+                val currentIcon = comp.icon
+                val isIdeaIcon = currentIcon != null && (
+                        currentIcon.toString().contains("idea", ignoreCase = true) ||
+                        currentIcon.toString().contains("intellij", ignoreCase = true)
+                )
+
+                if (isWelcomeLogo || isIdeaIcon) {
+                    val h = if (currentIcon != null && currentIcon.iconHeight > 0) currentIcon.iconHeight else comp.height
+                    val replacementIcon = when {
+                        h > 40 -> JormungandrIcons.LOGO_64
+                        h > 20 -> JormungandrIcons.LOGO_32
+                        else -> JormungandrIcons.APP_ICON
+                    }
+                    if (comp.icon !== replacementIcon) {
+                        comp.icon = replacementIcon
+                        comp.revalidate()
+                        comp.repaint()
+                    }
+                }
+            }
+            is javax.swing.text.JTextComponent -> {
+                val text = comp.text
+                if (text != null && (text.contains("IntelliJ") || text.contains("IDEA") || text.contains("JetBrains"))) {
+                    comp.text = rebrandText(text)
+                }
+            }
+            is AbstractButton -> {
+                val text = comp.text
+                if (text != null && text.isNotEmpty()) {
+                    val rebranded = rebrandText(text)
+                    if (rebranded != text) {
+                        comp.text = rebranded
+                    }
+                }
+            }
+            is JTabbedPane -> {
+                for (i in 0 until comp.tabCount) {
+                    val title = comp.getTitleAt(i)
+                    if (title != null) {
+                        val rebranded = rebrandText(title)
+                        if (rebranded != title) {
+                            comp.setTitleAt(i, rebranded)
+                        }
+                    }
+                }
+            }
+            is JToolTip -> {
+                val tip = comp.tipText
+                if (tip != null && tip.isNotEmpty()) {
+                    val rebranded = rebrandText(tip)
+                    if (rebranded != tip) {
+                        comp.tipText = rebranded
+                    }
+                }
+            }
+        }
+        if (comp is JComponent) {
+            val tip = comp.toolTipText
+            if (tip != null && (tip.contains("IntelliJ") || tip.contains("IDEA") || tip.contains("JetBrains"))) {
+                comp.toolTipText = rebrandText(tip)
+            }
+        }
+    }
+
+    /**
+     * Recursively traverses a component container to substitute upstream branding substrings and logos.
      */
     fun rebrandComponents(container: Container) {
         // Inspect for CustomHeader
@@ -357,55 +545,10 @@ object JormungandrBranding {
             patchCustomHeader(container)
         }
 
+        rebrandSingleComponent(container)
+
         for (comp in container.components) {
-            when (comp) {
-                is JLabel -> {
-                    val text = comp.text
-                    if (text != null) {
-                        val rebranded = rebrandText(text)
-                        if (rebranded != text) {
-                            comp.text = rebranded
-                        }
-                    }
-                    val accessibleName = comp.accessibleContext?.accessibleName
-                    if (accessibleName == "Application icon" ||
-                        comp.javaClass.name.contains("CustomHeader") ||
-                        comp.javaClass.name.contains("createProductIcon") ||
-                        comp.name == "productIcon") {
-                        comp.icon = JormungandrIcons.APP_ICON
-                        comp.repaint()
-                    }
-                }
-                is AbstractButton -> {
-                    val text = comp.text
-                    if (text != null) {
-                        val rebranded = rebrandText(text)
-                        if (rebranded != text) {
-                            comp.text = rebranded
-                        }
-                    }
-                }
-                is JTabbedPane -> {
-                    for (i in 0 until comp.tabCount) {
-                        val title = comp.getTitleAt(i)
-                        if (title != null) {
-                            val rebranded = rebrandText(title)
-                            if (rebranded != title) {
-                                comp.setTitleAt(i, rebranded)
-                            }
-                        }
-                    }
-                }
-                is JToolTip -> {
-                    val tip = comp.tipText
-                    if (tip != null) {
-                        val rebranded = rebrandText(tip)
-                        if (rebranded != tip) {
-                            comp.tipText = rebranded
-                        }
-                    }
-                }
-            }
+            rebrandSingleComponent(comp)
             if (comp is Container && comp.componentCount > 0) {
                 rebrandComponents(comp)
             }

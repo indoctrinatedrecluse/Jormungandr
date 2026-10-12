@@ -15,6 +15,20 @@ class JormungandrShutdownListener : AppLifecycleListener {
 
     private val LOG = Logger.getInstance(JormungandrShutdownListener::class.java)
 
+    override fun welcomeScreenDisplayed() {
+        LOG.info("Jörmungandr welcomeScreenDisplayed signal received. Applying welcome screen branding overhaul...")
+        javax.swing.SwingUtilities.invokeLater {
+            try {
+                org.jormungandr.shell.branding.JormungandrBranding.rebrandAllWindows()
+                org.jormungandr.shell.splash.JormungandrSplashScreen.dismiss {
+                    LOG.info("Splash screen dismissed on welcome screen display.")
+                }
+            } catch (t: Throwable) {
+                LOG.warn("Failed to apply welcome screen branding on welcomeScreenDisplayed", t)
+            }
+        }
+    }
+
     override fun appClosing() {
         LOG.info("Jörmungandr exit signal received (appClosing). Terminating background daemons to prevent Saving Settings hang...")
         cleanupBackgroundDaemons()
