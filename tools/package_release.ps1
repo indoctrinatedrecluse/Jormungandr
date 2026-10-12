@@ -77,17 +77,70 @@ $updaterPs1 = Join-Path $ProjectRoot "installer\jormungandr-updater.ps1"
 Copy-Item -Path $updaterBat -Destination (Join-Path $stagingDir "bin\jormungandr-updater.bat") -Force
 Copy-Item -Path $updaterPs1 -Destination (Join-Path $stagingDir "bin\jormungandr-updater.ps1") -Force
 
+Write-Host "Locating Python interpreter for distribution patching..." -ForegroundColor Yellow
+$pythonCandidates = @(
+    "C:\Users\RECLUSE\AppData\Local\Python\bin\python.exe",
+    "${env:LOCALAPPDATA}\Python\bin\python.exe",
+    "${env:LOCALAPPDATA}\Programs\Python\Python314\python.exe",
+    "${env:LOCALAPPDATA}\Programs\Python\Python313\python.exe",
+    "${env:LOCALAPPDATA}\Programs\Python\Python312\python.exe",
+    "${env:LOCALAPPDATA}\Programs\Python\Python311\python.exe",
+    "${env:LOCALAPPDATA}\Programs\Python\Python310\python.exe",
+    "py.exe",
+    "python.exe"
+)
+$resolvedPython = $null
+foreach ($cand in $pythonCandidates) {
+    if (Test-Path $cand) {
+        $resolvedPython = $cand
+        break
+    } elseif (Get-Command $cand -ErrorAction SilentlyContinue) {
+        $found = (Get-Command $cand).Source
+        if ($found -notlike "*WindowsApps*") {
+            $resolvedPython = $found
+            break
+        }
+    }
+}
+
+if (-not $resolvedPython) {
+    Write-Error "Could not locate a valid Python interpreter to run patch_portable_ide.py!"
+}
+
+Write-Host "Using Python: $resolvedPython" -ForegroundColor Green
 Write-Host "Patching portable distribution via patch_portable_ide.py..." -ForegroundColor Yellow
-python "$ProjectRoot\tools\patch_portable_ide.py" "$stagingDir" "$resourcesDir" "$tag"
+& $resolvedPython "$ProjectRoot\tools\patch_portable_ide.py" "$stagingDir" "$resourcesDir" "$tag"
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "patch_portable_ide.py failed with exit code $LASTEXITCODE!"
+}
 
-# Compress with 7-Zip
+# Post-patch verification: verify essential files exist
+$criticalFiles = @(
+    (Join-Path $stagingDir "jormungandr.bat"),
+    (Join-Path $stagingDir "Jormungandr.bat"),
+    (Join-Path $stagingDir "bin\jormungandr.bat"),
+    (Join-Path $stagingDir "bin\idea.properties"),
+    (Join-Path $stagingDir "bin\idea64.exe.vmoptions"),
+    (Join-Path $stagingDir "bin\idea.exe"),
+    (Join-Path $stagingDir "bin\idea.exe.vmoptions"),
+    (Join-Path $stagingDir "bin\jormungandr64.exe"),
+    (Join-Path $stagingDir "lib\jormungandr-bootstrap.jar")
+)
+foreach ($cf in $criticalFiles) {
+    if (-not (Test-Path $cf)) {
+        Write-Error "CRITICAL: Required distribution file missing after patching: $cf"
+    }
+}
+Write-Host "[OK] All critical launch and branding files verified successfully in staging!" -ForegroundColor Green
+
+# Compress with 7-Zip (multi-threaded)
 $portableZip = Join-Path $distDir "Jormungandr-$tag-windows-x64.zip"
-Write-Host "Compressing standalone portable package to $portableZip..." -ForegroundColor Yellow
+Write-Host "Compressing standalone portable package to $portableZip (multi-threaded)..." -ForegroundColor Yellow
 
-# Archive from stagingRoot so the archive contains Jormungandr-v1.2.0/... folder
+# Archive from stagingRoot so the archive contains Jormungandr-$tag/... folder
 Push-Location $stagingRoot
 try {
-    & 7z a -tzip -mx=5 $portableZip "Jormungandr-$tag"
+    & 7z a -tzip -mx=5 -mmt=8 $portableZip "Jormungandr-$tag"
 } finally {
     Pop-Location
 }

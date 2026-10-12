@@ -32,7 +32,7 @@ try {
     if (-not $BaselineDir) {
         if ($BaselineZip -and (Test-Path $BaselineZip)) {
             Write-Host "Extracting baseline archive: $BaselineZip..." -ForegroundColor Yellow
-            & 7z x -y $BaselineZip "-o$baselineExtractDir" | Out-Null
+            & 7z x -y -mmt=8 $BaselineZip "-o$baselineExtractDir" | Out-Null
             $innerDir = Get-ChildItem -Path $baselineExtractDir -Directory | Select-Object -First 1
             if ($innerDir -and (Test-Path (Join-Path $innerDir.FullName "bin"))) {
                 $BaselineDir = $innerDir.FullName
@@ -130,7 +130,7 @@ try {
     Write-Host "Compressing smart delta patch package to $patchZipPath..." -ForegroundColor Yellow
     Push-Location $patchStagingDir
     try {
-        & 7z a -tzip -mx=7 $patchZipPath "*" | Out-Null
+        & 7z a -tzip -mx=7 -mmt=8 $patchZipPath "*" | Out-Null
     } finally {
         Pop-Location
     }

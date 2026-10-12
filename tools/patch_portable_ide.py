@@ -21,6 +21,9 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     print(f"[*] Resources directory: {resources_dir}")
     print(f"[*] Release tag: {tag_name}")
 
+    if not os.path.isdir(staging_dir):
+        raise FileNotFoundError(f"Staging directory does not exist: {staging_dir}")
+
     # 1. Build and install lib/jormungandr-bootstrap.jar
     lib_dir = os.path.join(staging_dir, "lib")
     os.makedirs(lib_dir, exist_ok=True)
@@ -39,27 +42,43 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
   <essential-plugin>com.intellij.java.ide</essential-plugin>
   <essential-plugin>com.intellij.modules.json</essential-plugin>
   <essential-plugin>org.jormungandr.ide</essential-plugin>
+  <essential-plugin>org.jormungandr.jupyter</essential-plugin>
+  <essential-plugin>org.jormungandr.dataframe</essential-plugin>
+  <essential-plugin>org.jormungandr.database</essential-plugin>
 </component>'''
 
     print(" -> Creating lib/jormungandr-bootstrap.jar...")
+    svg_path = os.path.join(resources_dir, 'icons', 'jormungandr.svg')
+    svg16_path = os.path.join(resources_dir, 'icons', 'jormungandr_16.svg')
+    splash_path = os.path.join(resources_dir, 'splash', 'splash.png')
+    splash2x_path = os.path.join(resources_dir, 'splash', 'splash@2x.png')
+
     with zipfile.ZipFile(bootstrap_jar, 'w', compression=zipfile.ZIP_DEFLATED) as z:
         z.writestr('idea/IdeaApplicationInfo.xml', app_info_xml.encode('utf-8'))
 
-        svg_path = os.path.join(resources_dir, 'icons', 'jormungandr.svg')
         if os.path.exists(svg_path):
             with open(svg_path, 'rb') as f:
                 svg_data = f.read()
                 z.writestr('idea-ce.svg', svg_data)
+                z.writestr('icons/jormungandr.svg', svg_data)
 
-        svg16_path = os.path.join(resources_dir, 'icons', 'jormungandr_16.svg')
         if os.path.exists(svg16_path):
             with open(svg16_path, 'rb') as f:
-                z.writestr('idea-ce_16.svg', f.read())
+                svg16_data = f.read()
+                z.writestr('idea-ce_16.svg', svg16_data)
+                z.writestr('icons/jormungandr_16.svg', svg16_data)
 
-        splash_path = os.path.join(resources_dir, 'splash', 'splash.png')
         if os.path.exists(splash_path):
             with open(splash_path, 'rb') as f:
-                z.writestr('idea_community_logo.png', f.read())
+                splash_data = f.read()
+                z.writestr('idea_community_logo.png', splash_data)
+                z.writestr('splash/splash.png', splash_data)
+
+        if os.path.exists(splash2x_path):
+            with open(splash2x_path, 'rb') as f:
+                splash2x_data = f.read()
+                z.writestr('idea_community_logo@2x.png', splash2x_data)
+                z.writestr('splash/splash@2x.png', splash2x_data)
 
         for folder in ['icons', 'splash', 'themes']:
             full_folder = os.path.join(resources_dir, folder)
@@ -68,7 +87,8 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
                     for f in files:
                         full_path = os.path.join(root, f)
                         rel_path = os.path.relpath(full_path, resources_dir).replace('\\', '/')
-                        z.write(full_path, rel_path)
+                        if rel_path not in z.namelist():
+                            z.write(full_path, rel_path)
 
         for f in os.listdir(resources_dir):
             if f.startswith('consents') and f.endswith('.json'):
@@ -107,30 +127,42 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         icon_data = open(icon_file, 'rb').read() if os.path.exists(icon_file) else None
         icon16_data = open(icon16_file, 'rb').read() if os.path.exists(icon16_file) else None
 
+        overridden_entries = {
+            'idea/IdeaApplicationInfo.xml',
+            'idea_community_logo.png',
+            'idea_community_logo@2x.png',
+            'splash/splash.png',
+            'splash/splash@2x.png',
+            'icons/jormungandr.svg',
+            'icons/jormungandr_16.svg',
+            'idea-ce.svg',
+            'idea-ce_16.svg',
+            '__index__'
+        }
+
         with zipfile.ZipFile(app_jar, 'r') as zin, zipfile.ZipFile(tmp_app_jar, 'w', compression=zipfile.ZIP_DEFLATED) as zout:
             for item in zin.infolist():
-                if item.filename == 'idea/IdeaApplicationInfo.xml':
-                    zout.writestr(item.filename, app_info_xml.encode('utf-8'))
-                    print("    [+] Replaced idea/IdeaApplicationInfo.xml in app.jar")
-                elif item.filename == 'idea_community_logo.png' and splash_data:
-                    zout.writestr(item.filename, splash_data)
-                    print("    [+] Replaced idea_community_logo.png with splash.png in app.jar")
-                elif item.filename == 'idea_community_logo@2x.png' and splash2x_data:
-                    zout.writestr(item.filename, splash2x_data)
-                    print("    [+] Replaced idea_community_logo@2x.png with splash@2x.png in app.jar")
-                elif item.filename == '__index__':
-                    pass
-                else:
-                    zout.writestr(item, zin.read(item.filename))
+                if item.filename in overridden_entries:
+                    continue
+                zout.writestr(item, zin.read(item.filename))
+
+            zout.writestr('idea/IdeaApplicationInfo.xml', app_info_xml.encode('utf-8'))
+            print("    [+] Replaced idea/IdeaApplicationInfo.xml in app.jar")
 
             if splash_data:
+                zout.writestr('idea_community_logo.png', splash_data)
                 zout.writestr('splash/splash.png', splash_data)
+                print("    [+] Injected Jörmungandr splash logo into app.jar")
             if splash2x_data:
+                zout.writestr('idea_community_logo@2x.png', splash2x_data)
                 zout.writestr('splash/splash@2x.png', splash2x_data)
             if icon_data:
                 zout.writestr('icons/jormungandr.svg', icon_data)
+                zout.writestr('idea-ce.svg', icon_data)
+                print("    [+] Injected Jörmungandr SVG icon into app.jar")
             if icon16_data:
                 zout.writestr('icons/jormungandr_16.svg', icon16_data)
+                zout.writestr('idea-ce_16.svg', icon16_data)
 
         shutil.move(tmp_app_jar, app_jar)
 
@@ -149,18 +181,17 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     elif os.path.exists(portable_plugins_dir) and any(os.path.isdir(os.path.join(portable_plugins_dir, d)) for d in os.listdir(portable_plugins_dir)):
         src_dir = portable_plugins_dir
     elif os.path.exists(plugins_dir):
-        # Check if platform-shell or jupyter-integration is in plugins_dir
         for cand in ["platform-shell", "jupyter-integration", "dataframe-viewer", "database-suite"]:
             if os.path.isdir(os.path.join(plugins_dir, cand)):
                 src_dir = plugins_dir
                 break
 
     if src_dir:
-        print(f" -> Deploying Jörmungandr plugins from {src_dir} to portable-data/plugins and backup directories...")
+        print(f" -> Deploying Jörmungandr plugins from {src_dir} across distribution targets...")
         for item in ["platform-shell", "jupyter-integration", "dataframe-viewer", "database-suite"]:
             src_item = os.path.join(src_dir, item)
             if os.path.isdir(src_item):
-                for dest in [portable_plugins_dir, jorm_plugins_dir, plugins_dir]:
+                for dest in [plugins_dir, portable_plugins_dir, jorm_plugins_dir]:
                     dest_item = os.path.join(dest, item)
                     if os.path.abspath(src_item) != os.path.abspath(dest_item):
                         if os.path.exists(dest_item):
@@ -183,39 +214,38 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         product_info["dataDirectoryName"] = "Jormungandr1.0"
         product_info["svgIconPath"] = "bin/jormungandr.svg"
 
-        if "launch" in product_info and len(product_info["launch"]) > 0:
-            launch = product_info["launch"][0]
-            cp_jars = launch.get("bootClassPathJarNames", [])
-            if "jormungandr-bootstrap.jar" in cp_jars:
-                cp_jars.remove("jormungandr-bootstrap.jar")
-            # Insert right after platform-loader.jar
-            if len(cp_jars) > 0 and cp_jars[0] == "platform-loader.jar":
-                cp_jars.insert(1, "jormungandr-bootstrap.jar")
-            else:
-                cp_jars.insert(0, "jormungandr-bootstrap.jar")
-            launch["bootClassPathJarNames"] = cp_jars
-
-            args = launch.get("additionalJvmArguments", [])
-            new_args = []
-            for a in args:
-                if a.startswith("-Didea.vendor.name="):
-                    new_args.append("-Didea.vendor.name=indoctrinatedrecluse")
-                elif a.startswith("-Didea.paths.selector="):
-                    new_args.append("-Didea.paths.selector=Jormungandr1.0")
-                elif a.startswith("-Didea.product.name="):
-                    continue
-                elif a.startswith("-Didea.application.name="):
-                    continue
+        if "launch" in product_info:
+            for launch in product_info["launch"]:
+                cp_jars = launch.get("bootClassPathJarNames", [])
+                if "jormungandr-bootstrap.jar" in cp_jars:
+                    cp_jars.remove("jormungandr-bootstrap.jar")
+                if len(cp_jars) > 0 and cp_jars[0] == "platform-loader.jar":
+                    cp_jars.insert(1, "jormungandr-bootstrap.jar")
                 else:
-                    new_args.append(a)
-            new_args.append("-Didea.product.name=Jörmungandr")
-            new_args.append("-Didea.application.name=Jörmungandr")
-            launch["additionalJvmArguments"] = new_args
+                    cp_jars.insert(0, "jormungandr-bootstrap.jar")
+                launch["bootClassPathJarNames"] = cp_jars
+
+                args = launch.get("additionalJvmArguments", [])
+                new_args = []
+                for a in args:
+                    if a.startswith("-Didea.vendor.name="):
+                        new_args.append("-Didea.vendor.name=indoctrinatedrecluse")
+                    elif a.startswith("-Didea.paths.selector="):
+                        new_args.append("-Didea.paths.selector=Jormungandr1.0")
+                    elif a.startswith("-Didea.product.name=") or a.startswith("-Didea.application.name=") or a.startswith("-Didea.platform.prefix="):
+                        continue
+                    else:
+                        new_args.append(a)
+                new_args.append("-Didea.product.name=Jörmungandr")
+                new_args.append("-Didea.application.name=Jörmungandr")
+                new_args.append("-Didea.platform.prefix=Idea")
+                new_args.append("-Didea.required.plugins.id=org.jormungandr.ide")
+                launch["additionalJvmArguments"] = new_args
 
         with open(product_info_path, 'w', encoding='utf-8', newline='\n') as f:
             json.dump(product_info, f, indent=2, ensure_ascii=False)
 
-    # 3. Write bin/idea.properties (strict ASCII / UTF-8 without BOM)
+    # 3. Write bin/idea.properties
     bin_dir = os.path.join(staging_dir, "bin")
     os.makedirs(bin_dir, exist_ok=True)
     idea_properties_path = os.path.join(bin_dir, "idea.properties")
@@ -229,6 +259,9 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         "idea.vendor.name=indoctrinatedrecluse",
         "idea.product.name=Jörmungandr",
         "idea.application.name=Jörmungandr",
+        "idea.paths.selector=Jormungandr1.0",
+        "idea.platform.prefix=Idea",
+        "idea.required.plugins.id=org.jormungandr.ide",
         "idea.fatal.error.notification=disabled",
         "sun.java2d.uiScale.enabled=true",
         "swing.bufferPerWindow=true",
@@ -239,7 +272,7 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     with open(idea_properties_path, 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(props_lines))
 
-    # 4. Append to bin/idea64.exe.vmoptions & copy to jormungandr64.exe.vmoptions
+    # 4. Update bin/idea64.exe.vmoptions
     vmoptions_path = os.path.join(bin_dir, "idea64.exe.vmoptions")
     print(" -> Updating bin/idea64.exe.vmoptions...")
     vm_additions = [
@@ -250,6 +283,10 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         "-Didea.platform.prefix=Idea",
         "-Didea.paths.selector=Jormungandr1.0",
         "-Didea.required.plugins.id=org.jormungandr.ide",
+        "-Didea.config.path=../portable-data/config",
+        "-Didea.system.path=../portable-data/system",
+        "-Didea.plugins.path=../portable-data/plugins",
+        "-Didea.log.path=../portable-data/log",
         "-Djb.consents.confirmation.enabled=false",
         "-Deua.consents.confirmation.enabled=false",
         "-Didea.initially.ask.config=false",
@@ -271,16 +308,21 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
             with open(vmoptions_path, 'a', encoding='utf-8', newline='\n') as f:
                 f.write('\n'.join(vm_additions))
 
-    # Create jormungandr64.exe and jormungandr64.exe.vmoptions
+    # 5. Clone executables and .vmoptions in bin for seamless execution
     idea64_exe = os.path.join(bin_dir, "idea64.exe")
-    jorm_exe = os.path.join(bin_dir, "jormungandr64.exe")
-    jorm_vmoptions = os.path.join(bin_dir, "jormungandr64.exe.vmoptions")
-    if os.path.exists(idea64_exe):
-        shutil.copy2(idea64_exe, jorm_exe)
-    if os.path.exists(vmoptions_path):
-        shutil.copy2(vmoptions_path, jorm_vmoptions)
+    for exe_name in ["idea.exe", "jormungandr.exe", "jormungandr64.exe"]:
+        dst_exe = os.path.join(bin_dir, exe_name)
+        if os.path.exists(idea64_exe) and not os.path.exists(dst_exe):
+            shutil.copy2(idea64_exe, dst_exe)
+            print(f"    [+] Created {exe_name} in bin/")
 
-    # 5. Patch bin/idea.bat
+    for opt_name in ["idea.exe.vmoptions", "jormungandr.exe.vmoptions", "jormungandr64.exe.vmoptions"]:
+        dst_opt = os.path.join(bin_dir, opt_name)
+        if os.path.exists(vmoptions_path) and not os.path.exists(dst_opt):
+            shutil.copy2(vmoptions_path, dst_opt)
+            print(f"    [+] Created {opt_name} in bin/")
+
+    # 6. Patch bin/idea.bat
     idea_bat = os.path.join(bin_dir, "idea.bat")
     if os.path.exists(idea_bat):
         print(" -> Patching bin/idea.bat...")
@@ -302,7 +344,7 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         with open(idea_bat, 'w', encoding='latin1', newline='\r\n') as f:
             f.writelines(new_bat)
 
-    # 6. Copy launcher icons in bin
+    # 7. Copy launcher icons in bin
     ico_src = os.path.join(resources_dir, "icons", "jormungandr.ico")
     svg_src = os.path.join(resources_dir, "icons", "jormungandr.svg")
     for dst_name in ["idea.ico", "jormungandr.ico"]:
@@ -312,7 +354,7 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         if os.path.exists(svg_src):
             shutil.copy2(svg_src, os.path.join(bin_dir, dst_name))
 
-    # 7. Pre-populate portable consent & configuration
+    # 8. Pre-populate portable consent & configuration
     portable_data = os.path.join(staging_dir, "portable-data")
     options_dir = os.path.join(portable_data, "config", "options")
     os.makedirs(options_dir, exist_ok=True)
@@ -360,18 +402,60 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     with open(os.path.join(options_dir, "laf.xml"), 'w', encoding='utf-8', newline='\n') as f:
         f.write(laf_xml)
 
-    # 8. Create root launcher Jormungandr.bat with plugin auto-heal
-    launcher_bat = os.path.join(staging_dir, "Jormungandr.bat")
+    # 9. Create root launchers jormungandr.bat & Jormungandr.bat & bin/jormungandr.bat
     bat_content = '''@echo off
-if not exist "%~dp0portable-data\\plugins\\platform-shell" (
-    if exist "%~dp0jormungandr-plugins" (
-        xcopy /E /I /Q /Y "%~dp0jormungandr-plugins" "%~dp0portable-data\\plugins" >nul 2>&1
+setlocal
+title Jormungandr IDE
+
+set "IDE_ROOT=%~dp0"
+if "%IDE_ROOT:~-1%"=="\\" set "IDE_ROOT=%IDE_ROOT:~0,-1%"
+set "IDE_BIN=%IDE_ROOT%\\bin"
+
+:: Ensure portable-data directories exist
+if not exist "%IDE_ROOT%\\portable-data\\config" mkdir "%IDE_ROOT%\\portable-data\\config" >nul 2>&1
+if not exist "%IDE_ROOT%\\portable-data\\system" mkdir "%IDE_ROOT%\\portable-data\\system" >nul 2>&1
+if not exist "%IDE_ROOT%\\portable-data\\plugins" mkdir "%IDE_ROOT%\\portable-data\\plugins" >nul 2>&1
+if not exist "%IDE_ROOT%\\portable-data\\log" mkdir "%IDE_ROOT%\\portable-data\\log" >nul 2>&1
+
+:: Synchronize Jormungandr plugins into portable-data\\plugins if missing
+for %%P in (platform-shell jupyter-integration dataframe-viewer database-suite) do (
+    if not exist "%IDE_ROOT%\\portable-data\\plugins\\%%P" (
+        if exist "%IDE_ROOT%\\plugins\\%%P" (
+            xcopy /E /I /Q /Y "%IDE_ROOT%\\plugins\\%%P" "%IDE_ROOT%\\portable-data\\plugins\\%%P\\" >nul 2>&1
+        ) else if exist "%IDE_ROOT%\\jormungandr-plugins\\%%P" (
+            xcopy /E /I /Q /Y "%IDE_ROOT%\\jormungandr-plugins\\%%P" "%IDE_ROOT%\\portable-data\\plugins\\%%P\\" >nul 2>&1
+        )
     )
 )
-start "" "%~dp0bin\\idea64.exe" %*
+
+:: Launch the 64-bit executable with passed arguments
+if exist "%IDE_BIN%\\jormungandr64.exe" (
+    start "" "%IDE_BIN%\\jormungandr64.exe" %*
+) else if exist "%IDE_BIN%\\idea64.exe" (
+    start "" "%IDE_BIN%\\idea64.exe" %*
+) else if exist "%IDE_BIN%\\idea.exe" (
+    start "" "%IDE_BIN%\\idea.exe" %*
+) else if exist "%IDE_BIN%\\jormungandr.exe" (
+    start "" "%IDE_BIN%\\jormungandr.exe" %*
+) else (
+    echo [ERROR] No Jormungandr IDE executable found in %IDE_BIN%
+    pause
+)
 '''
-    with open(launcher_bat, 'w', encoding='ascii', newline='\r\n') as f:
-        f.write(bat_content)
+
+    for root_bat in ["jormungandr.bat", "Jormungandr.bat"]:
+        bat_path = os.path.join(staging_dir, root_bat)
+        with open(bat_path, 'w', encoding='ascii', newline='\r\n') as f:
+            f.write(bat_content)
+        print(f"    [+] Created root launcher: {root_bat}")
+
+    bin_bat_content = '''@echo off
+call "%~dp0..\\jormungandr.bat" %*
+'''
+    bin_jorm_bat = os.path.join(bin_dir, "jormungandr.bat")
+    with open(bin_jorm_bat, 'w', encoding='ascii', newline='\r\n') as f:
+        f.write(bin_bat_content)
+    print("    [+] Created bin/jormungandr.bat")
 
     print("[+] Staging patched successfully with 100% turnkey Jörmungandr branding and runtime config!")
 
@@ -379,5 +463,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: patch_portable_ide.py <staging_dir> <resources_dir> [tag_name]")
         sys.exit(1)
-    tag = sys.argv[3] if len(sys.argv) > 3 else "1.0.0"
+    tag = sys.argv[3] if len(sys.argv) > 3 else "1.3.0"
     patch_portable_ide(sys.argv[1], sys.argv[2], tag)
