@@ -142,7 +142,8 @@ Write-Host "Compressing standalone portable package to $portableZip ($threadCoun
 # Archive from stagingRoot so the archive contains Jormungandr-$tag/... folder
 Push-Location $stagingRoot
 try {
-    & 7z a -tzip -mx=3 -mmt=$threadCount $portableZip "Jormungandr-$tag"
+    $relZip = "..\Jormungandr-$tag-windows-x64.zip"
+    & 7z a -tzip -mx=3 -mmt=$threadCount $relZip "Jormungandr-$tag"
 } finally {
     Pop-Location
 }

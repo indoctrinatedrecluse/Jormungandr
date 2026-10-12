@@ -32,7 +32,10 @@ try {
     if (-not $BaselineDir) {
         if ($BaselineZip -and (Test-Path $BaselineZip)) {
             Write-Host "Extracting baseline archive: $BaselineZip..." -ForegroundColor Yellow
-            & 7z x -y -mmt=8 $BaselineZip "-o$baselineExtractDir" | Out-Null
+            $tempBaselineZip = Join-Path $tempDir "baseline.zip"
+            Copy-Item -Path $BaselineZip -Destination $tempBaselineZip -Force
+            & 7z x -y -mmt=8 $tempBaselineZip "-o$baselineExtractDir" | Out-Null
+            Remove-Item -Path $tempBaselineZip -Force -ErrorAction SilentlyContinue
             $innerDir = Get-ChildItem -Path $baselineExtractDir -Directory | Select-Object -First 1
             if ($innerDir -and (Test-Path (Join-Path $innerDir.FullName "bin"))) {
                 $BaselineDir = $innerDir.FullName
@@ -128,12 +131,14 @@ try {
     }
 
     Write-Host "Compressing smart delta patch package to $patchZipPath..." -ForegroundColor Yellow
+    $tempPatchZip = Join-Path $tempDir $patchZipName
     Push-Location $patchStagingDir
     try {
-        & 7z a -tzip -mx=7 -mmt=8 $patchZipPath "*" | Out-Null
+        & 7z a -tzip -mx=7 -mmt=8 $tempPatchZip "*" | Out-Null
     } finally {
         Pop-Location
     }
+    Move-Item -Path $tempPatchZip -Destination $patchZipPath -Force
 
     if (Test-Path $patchZipPath) {
         $patchSizeMB = [math]::Round((Get-Item $patchZipPath).Length / 1MB, 2)
