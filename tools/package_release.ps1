@@ -1,5 +1,6 @@
 param(
-    [string]$Tag = "v1.4.0"
+    [string]$Tag = "v1.4.0",
+    [string]$FromVersion = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -149,18 +150,55 @@ if (Test-Path $portableZip) {
     Write-Error "Failed to produce $portableZip"
 }
 
-# 3. Smart Delta Patch Package
-$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.3.0-windows-x64.zip"
-$fromVer = "1.3.0"
+# 3. Smart Delta Patch Package (Strictly against immediate previous release)
+$toVer = $tag.TrimStart('v').TrimStart('V')
+$fromVer = $FromVersion.TrimStart('v').TrimStart('V')
+
+if (-not $fromVer) {
+    # Dynamically determine immediate previous SemVer release
+    $vParts = $toVer.Split('.') | ForEach-Object { [int]$_ }
+    if ($vParts.Length -ge 3) {
+        $maj = $vParts[0]
+        $min = $vParts[1]
+        $pat = $vParts[2]
+        if ($pat -gt 0) {
+            $fromVer = "$maj.$min.$($pat - 1)"
+        } elseif ($min -gt 0) {
+            $fromVer = "$maj.$($min - 1).0"
+        } else {
+            $fromVer = "1.3.0"
+        }
+    } else {
+        $fromVer = "1.3.0"
+    }
+}
+
+$baselineDir = Join-Path $ProjectRoot "build\baseline"
+New-Item -ItemType Directory -Path $baselineDir -Force | Out-Null
+$baselineZip = Join-Path $baselineDir "Jormungandr-v$fromVer-windows-x64.zip"
+
 if (-not (Test-Path $baselineZip)) {
-    $baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.2.0-windows-x64.zip"
-    $fromVer = "1.2.0"
+    Write-Host "Baseline archive for immediate previous version v$fromVer not found locally. Attempting to download from GitHub releases..." -ForegroundColor Yellow
+    try {
+        & gh release download "v$fromVer" --pattern "*windows-x64.zip" --dir $baselineDir
+        $downloaded = Get-ChildItem -Path $baselineDir -Filter "*$fromVer*windows-x64.zip" | Select-Object -First 1
+        if ($downloaded) {
+            $baselineZip = $downloaded.FullName
+        }
+    } catch {
+        Write-Warning "Could not fetch v$fromVer release asset from GitHub: $_"
+    }
 }
+
 if (Test-Path $baselineZip) {
-    $toVer = $tag.TrimStart('v')
-    Write-Host "Generating Smart Delta Patch against v$fromVer baseline..." -ForegroundColor Yellow
+    Write-Host "Generating Smart Delta Patch against immediate previous version (v$fromVer -> v$toVer)..." -ForegroundColor Yellow
     & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion $fromVer -ToVersion $toVer -OutputDir $distDir
+} else {
+    Write-Error "CRITICAL: Delta patches must only be generated against the immediate previous version (v$fromVer)! Baseline archive not found."
 }
+
+# Cache current portable zip as baseline for next release
+Copy-Item -Path $portableZip -Destination (Join-Path $baselineDir "Jormungandr-$tag-windows-x64.zip") -Force
 
 # 4. Turnkey Windows Installer (.exe via Inno Setup)
 Write-Host "Compiling Windows Installer executable (.exe)..." -ForegroundColor Yellow

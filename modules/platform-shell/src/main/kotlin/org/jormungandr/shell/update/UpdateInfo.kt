@@ -13,8 +13,11 @@ data class UpdateInfo(
     val isDeltaPatch: Boolean,
     val downloadUrl: String,
     val downloadSize: Long,
+    val patchFromVersion: String? = null,
     val fullDownloadUrl: String? = null,
-    val fullDownloadSize: Long? = null
+    val fullDownloadSize: Long? = null,
+    val installerUrl: String? = null,
+    val installerSize: Long? = null
 ) {
     fun formatSize(bytes: Long): String {
         if (bytes <= 0) return "Unknown"

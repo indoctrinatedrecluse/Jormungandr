@@ -33,7 +33,7 @@ class UpdateDialog(
         preferredSize = Dimension(520, 20)
     }
 
-    private val primaryActionBtn = JButton("⬇️ Download & Update").apply {
+    private val primaryActionBtn = JButton(if (info.isDeltaPatch) "⬇️ Download & Update Patch" else "⬇️ Download & Reinstall").apply {
         font = font.deriveFont(Font.BOLD, 12f)
         cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     }
@@ -135,6 +135,19 @@ class UpdateDialog(
                 alignmentX = Component.LEFT_ALIGNMENT
             }
             root.add(savingsNote)
+            root.add(Box.createVerticalStrut(8))
+        } else {
+            val reinstallNote = JLabel(
+                if (info.patchFromVersion != null)
+                    "ℹ Full Reinstall Required: Direct delta patch requires v${info.patchFromVersion} (installed: v${info.currentVersion}). Full package will update your IDE to v${info.latestVersion}."
+                else
+                    "ℹ Full Package Update: Downloading complete distribution to update your IDE to v${info.latestVersion}."
+            ).apply {
+                font = font.deriveFont(Font.PLAIN, 10.5f)
+                foreground = Color(180, 83, 9)
+                alignmentX = Component.LEFT_ALIGNMENT
+            }
+            root.add(reinstallNote)
             root.add(Box.createVerticalStrut(8))
         }
 
@@ -242,7 +255,12 @@ class UpdateDialog(
                     progressBar.value = 100
                     progressBar.string = "Complete (100%)"
                     primaryActionBtn.isEnabled = true
-                    primaryActionBtn.text = "🔄 Restart & Apply Update"
+                    val isExe = downloadedFile?.name?.endsWith(".exe", ignoreCase = true) == true
+                    primaryActionBtn.text = when {
+                        info.isDeltaPatch -> "🔄 Restart & Apply Patch"
+                        isExe -> "🚀 Launch Installer & Reinstall"
+                        else -> "🔄 Restart & Reinstall"
+                    }
                     primaryActionBtn.background = Color(37, 99, 235)
                 } else {
                     statusLabel.text = "❌ Download cancelled or failed."

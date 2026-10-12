@@ -165,15 +165,7 @@ class DuckDbLakehousePanel(
 
         val rightTools = JPanel(FlowLayout(FlowLayout.RIGHT, 6, 0)).apply { isOpaque = false }
         val lic = org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value
-        val licBadge = JBLabel(" [${lic.licenseType.name}] ").apply {
-            font = font.deriveFont(Font.BOLD, 10.5f)
-            foreground = when (lic.licenseType) {
-                org.jormungandr.core.license.LicenseType.ADMIN -> Color(245, 158, 11)
-                org.jormungandr.core.license.LicenseType.DEVELOPER -> Color(168, 85, 247)
-                org.jormungandr.core.license.LicenseType.USER -> Color(16, 185, 129)
-                org.jormungandr.core.license.LicenseType.TRIAL -> Color(100, 116, 139)
-            }
-        }
+        val licBadge = org.jormungandr.core.license.LicenseBadgeFactory.createBadgeComponent(lic, large = false)
         rightTools.add(licBadge)
         val pipeDfBtn = JButton("📊 Open in Studio").apply {
             isFocusable = false

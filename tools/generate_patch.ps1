@@ -109,7 +109,11 @@ try {
     Write-Host "Delta Summary:" -ForegroundColor Yellow
     Write-Host "  Added/Modified files: $($addedOrModified.Count)" -ForegroundColor Green
     Write-Host "  Deleted files:        $($deletions.Count)" -ForegroundColor Red
-    Write-Host "------------------------------------------------------------" -ForegroundColor DarkGray
+    # Ensure jormungandr-version.txt markers exist in patch payload
+    Set-Content -Path (Join-Path $patchFilesDir "jormungandr-version.txt") -Value "$ToVersion" -Encoding UTF8 -Force
+    $patchBin = Join-Path $patchFilesDir "bin"
+    New-Item -ItemType Directory -Path $patchBin -Force | Out-Null
+    Set-Content -Path (Join-Path $patchBin "jormungandr-version.txt") -Value "$ToVersion" -Encoding UTF8 -Force
 
     # 5. Write patch-plan.json
     $plan = @{

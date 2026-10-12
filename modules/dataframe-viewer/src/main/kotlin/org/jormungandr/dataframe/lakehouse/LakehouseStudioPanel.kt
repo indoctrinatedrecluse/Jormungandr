@@ -50,15 +50,7 @@ class LakehouseStudioPanel(
                 isOpaque = false
                 add(title, BorderLayout.WEST)
                 val lic = org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value
-                val licLabel = JBLabel(" [${lic.licenseType.name}] ").apply {
-                    font = font.deriveFont(Font.BOLD, 10.5f)
-                    foreground = when (lic.licenseType) {
-                        org.jormungandr.core.license.LicenseType.ADMIN -> java.awt.Color(245, 158, 11)
-                        org.jormungandr.core.license.LicenseType.DEVELOPER -> java.awt.Color(168, 85, 247)
-                        org.jormungandr.core.license.LicenseType.USER -> java.awt.Color(16, 185, 129)
-                        org.jormungandr.core.license.LicenseType.TRIAL -> java.awt.Color(100, 116, 139)
-                    }
-                }
+                val licLabel = org.jormungandr.core.license.LicenseBadgeFactory.createBadgeComponent(lic, large = false)
                 add(licLabel, BorderLayout.EAST)
             }
             add(titleRow, BorderLayout.NORTH)

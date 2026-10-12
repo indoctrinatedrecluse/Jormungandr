@@ -381,10 +381,10 @@ object JormungandrBranding {
                         }
                         val license = runCatching { org.jormungandr.core.license.LicenseService.getInstance().currentLicense.value }.getOrNull()
                         val tag = when (license?.licenseType) {
-                            org.jormungandr.core.license.LicenseType.ADMIN -> " [👑 ADMIN PRIVILEGED]"
-                            org.jormungandr.core.license.LicenseType.DEVELOPER -> " [⚡ DEV EDITION]"
-                            org.jormungandr.core.license.LicenseType.USER -> " [👤 USER LICENSE]"
-                            org.jormungandr.core.license.LicenseType.TRIAL -> " [⏳ TRIAL (${license.trialDaysRemaining}d)]"
+                            org.jormungandr.core.license.LicenseType.ADMIN -> " [ADMIN PRIVILEGED]"
+                            org.jormungandr.core.license.LicenseType.DEVELOPER -> " [DEV EDITION]"
+                            org.jormungandr.core.license.LicenseType.USER -> " [USER LICENSE]"
+                            org.jormungandr.core.license.LicenseType.TRIAL -> " [TRIAL (${license.trialDaysRemaining}d)]"
                             null -> ""
                         }
                         if (!rebranded.contains("ADMIN") && !rebranded.contains("DEV") && !rebranded.contains("USER") && !rebranded.contains("TRIAL")) {

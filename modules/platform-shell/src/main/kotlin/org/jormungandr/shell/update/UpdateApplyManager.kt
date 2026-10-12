@@ -15,19 +15,36 @@ private val LOG = logger<UpdateApplyManager>()
 object UpdateApplyManager {
 
     /**
-     * Unpacks [patchZip] into the staging directory, spawns the detached updater, and exits the IDE.
+     * Unpacks patch or portable zip into staging directory (or launches installer executable directly),
+     * spawns the detached updater/installer process, and gracefully exits the IDE.
      */
-    fun applyAndRestart(patchZip: File): Boolean {
+    fun applyAndRestart(packageFile: File): Boolean {
         return try {
             val ideHome = File(PathManager.getHomePath()).canonicalFile
+
+            // 1. Direct Windows Installer Executable (.exe)
+            if (packageFile.name.endsWith(".exe", ignoreCase = true)) {
+                LOG.info("Spawning detached turnkey installer: ${packageFile.absolutePath}")
+                val pb = ProcessBuilder(packageFile.absolutePath)
+                pb.directory(packageFile.parentFile ?: ideHome)
+                pb.start()
+
+                // Gracefully terminate current IDE instance
+                ApplicationManager.getApplication().invokeLater {
+                    ApplicationManager.getApplication().exit(true, true, true)
+                }
+                return true
+            }
+
+            // 2. Zip Archive (Delta Patch or Full Portable Distribution)
             val stagingDir = File(ideHome, "update-staging")
             if (stagingDir.exists()) {
                 stagingDir.deleteRecursively()
             }
             stagingDir.mkdirs()
 
-            LOG.info("Extracting patch archive ${patchZip.absolutePath} to ${stagingDir.absolutePath}...")
-            unzip(patchZip, stagingDir)
+            LOG.info("Extracting package archive ${packageFile.absolutePath} to ${stagingDir.absolutePath}...")
+            unzip(packageFile, stagingDir)
 
             // Locate external updater script
             var updaterBat = File(ideHome, "bin/jormungandr-updater.bat")

@@ -258,7 +258,7 @@ class ExtensionsDialog(private val currentProject: Project? = null) : DialogWrap
             val isDesigned = licenseService.isDesignedExtension(ext.id.value)
             if (isDesigned) {
                 val isUnlocked = licenseService.isExtensionUnlocked(ext.id.value)
-                val lockText = if (isUnlocked) "🔓 UNLOCKED (${licenseService.currentLicense.value.licenseType.name})" else "🔒 GATED (COMMERCIAL LICENSE REQUIRED)"
+                val lockText = if (isUnlocked) "UNLOCKED (${licenseService.currentLicense.value.licenseType.name})" else "GATED (COMMERCIAL LICENSE REQUIRED)"
                 val lockColor = if (isUnlocked) Color(16, 185, 129) else Color(225, 29, 72)
                 val lockBadge = JLabel(" $lockText ").apply {
                     font = font.deriveFont(Font.BOLD, 10.5f)
@@ -270,7 +270,7 @@ class ExtensionsDialog(private val currentProject: Project? = null) : DialogWrap
                 add(Box.createHorizontalStrut(6))
                 add(lockBadge)
             } else {
-                val freeBadge = JLabel(" 🌐 COMMUNITY / UNRESTRICTED ").apply {
+                val freeBadge = JLabel(" COMMUNITY / UNRESTRICTED ").apply {
                     font = font.deriveFont(Font.BOLD, 10.5f)
                     foreground = Color(71, 85, 105)
                     isOpaque = true

@@ -325,8 +325,18 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
                 new_args.append("-Didea.required.plugins.id=org.jormungandr.ide")
                 launch["additionalJvmArguments"] = new_args
 
+            product_info["jormungandrVersion"] = clean_tag
+
         with open(product_info_path, 'w', encoding='utf-8', newline='\n') as f:
             json.dump(product_info, f, indent=2, ensure_ascii=False)
+
+        # Write version marker files for runtime version detection
+        with open(os.path.join(staging_dir, "jormungandr-version.txt"), 'w', encoding='utf-8') as f:
+            f.write(f"{clean_tag}\n")
+        bin_dir = os.path.join(staging_dir, "bin")
+        os.makedirs(bin_dir, exist_ok=True)
+        with open(os.path.join(bin_dir, "jormungandr-version.txt"), 'w', encoding='utf-8') as f:
+            f.write(f"{clean_tag}\n")
 
     # 3. Write bin/idea.properties
     bin_dir = os.path.join(staging_dir, "bin")

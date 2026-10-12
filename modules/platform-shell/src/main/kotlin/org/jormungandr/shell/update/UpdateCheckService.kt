@@ -11,6 +11,9 @@ private val LOG = logger<UpdateCheckService>()
 
 /**
  * Service that checks GitHub Releases for new Jörmungandr releases and smart delta patches.
+ * Adheres strictly to release governance:
+ * - If current version matches the upgradeable baseline for the latest release, only the delta patch is selected.
+ * - If not, full reinstall package (turnkey installer exe or portable zip) is selected.
  */
 class UpdateCheckService {
 
@@ -60,19 +63,25 @@ class UpdateCheckService {
                 val releaseNotes = root.get("body")?.asString ?: ""
                 val htmlUrl = root.get("html_url")?.asString ?: "https://github.com/${AppVersion.REPO_OWNER}/${AppVersion.REPO_NAME}/releases"
 
-                if (!AppVersion.isNewer(cleanLatest, AppVersion.CURRENT)) {
-                    LOG.info("Jörmungandr is up to date: installed=${AppVersion.CURRENT}, latest=$cleanLatest")
+                val currentVer = AppVersion.CURRENT
+                if (!AppVersion.isNewer(cleanLatest, currentVer)) {
+                    LOG.info("Jörmungandr is up to date: installed=$currentVer, latest=$cleanLatest")
                     onResult(null)
                     return@executeOnPooledThread
                 }
 
                 val assets = root.getAsJsonArray("assets") ?: com.google.gson.JsonArray()
-                var patchUrl: String? = null
-                var patchSize: Long = 0L
+                var matchingPatchUrl: String? = null
+                var matchingPatchSize: Long = 0L
+                var patchFromVer: String? = null
+                var anyPatchFromVer: String? = null
+
                 var fullZipUrl: String? = null
                 var fullZipSize: Long = 0L
+                var installerUrl: String? = null
+                var installerSize: Long = 0L
 
-                val patchNameExpected = "Jormungandr-Patch-v${AppVersion.CURRENT}-to-v${cleanLatest}.zip"
+                val patchPattern = Regex("""^Jormungandr-Patch-v([0-9.]+)-to-v([0-9.]+)\.zip$""", RegexOption.IGNORE_CASE)
 
                 for (item in assets) {
                     val obj = item.asJsonObject
@@ -80,22 +89,41 @@ class UpdateCheckService {
                     val downloadUrl = obj.get("browser_download_url")?.asString ?: continue
                     val size = obj.get("size")?.asLong ?: 0L
 
-                    if (name.equals(patchNameExpected, ignoreCase = true) ||
-                        (name.startsWith("Jormungandr-Patch-v${AppVersion.CURRENT}-") && name.endsWith(".zip", ignoreCase = true))) {
-                        patchUrl = downloadUrl
-                        patchSize = size
+                    val match = patchPattern.find(name)
+                    if (match != null) {
+                        val from = match.groupValues[1]
+                        val to = match.groupValues[2]
+                        anyPatchFromVer = from
+                        if (from == currentVer && to == cleanLatest) {
+                            matchingPatchUrl = downloadUrl
+                            matchingPatchSize = size
+                            patchFromVer = from
+                        }
                     } else if (name.endsWith("-windows-x64.zip", ignoreCase = true)) {
                         fullZipUrl = downloadUrl
                         fullZipSize = size
+                    } else if (name.endsWith(".exe", ignoreCase = true) && name.contains("Setup", ignoreCase = true)) {
+                        installerUrl = downloadUrl
+                        installerSize = size
                     }
                 }
 
-                val isDelta = patchUrl != null
-                val finalDownloadUrl = patchUrl ?: fullZipUrl ?: htmlUrl
-                val finalDownloadSize = if (isDelta) patchSize else fullZipSize
+                // If current version matches the upgradeable version of the patch, select only the patch.
+                // Otherwise, select full installer / portable package.
+                val isDelta = matchingPatchUrl != null
+                val finalDownloadUrl = if (isDelta) {
+                    matchingPatchUrl!!
+                } else {
+                    installerUrl ?: fullZipUrl ?: htmlUrl
+                }
+                val finalDownloadSize = if (isDelta) {
+                    matchingPatchSize
+                } else {
+                    if (installerUrl != null) installerSize else fullZipSize
+                }
 
                 val info = UpdateInfo(
-                    currentVersion = AppVersion.CURRENT,
+                    currentVersion = currentVer,
                     latestVersion = cleanLatest,
                     releaseTag = tagName,
                     releaseName = releaseName,
@@ -104,8 +132,11 @@ class UpdateCheckService {
                     isDeltaPatch = isDelta,
                     downloadUrl = finalDownloadUrl,
                     downloadSize = finalDownloadSize,
+                    patchFromVersion = patchFromVer ?: anyPatchFromVer,
                     fullDownloadUrl = fullZipUrl,
-                    fullDownloadSize = fullZipSize
+                    fullDownloadSize = fullZipSize,
+                    installerUrl = installerUrl,
+                    installerSize = installerSize
                 )
 
                 onResult(info)
