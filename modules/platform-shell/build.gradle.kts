@@ -54,7 +54,12 @@ tasks {
                 "-Dwsl.use.remote.agent.for.nio.filesystem=false",
                 "-Dwsl.enabled=false",
                 "-Dide.ijent.wsldefault=false",
-                "-Didea.wsl.support.enabled=false"
+                "-Didea.wsl.support.enabled=false",
+                "-Dide.no.platform.update=true",
+                "-Didea.no.platform.update=true",
+                "-Dide.check.update=false",
+                "-Didea.check.updates=false",
+                "-Dupdates.disabled=true"
             )
         })
 
@@ -159,6 +164,19 @@ tasks {
                     """<application>
   <component name="EditorColorsManagerImpl">
     <global_color_scheme name="Solarized Light" />
+  </component>
+</application>"""
+                )
+            }
+
+            val updatesXml = File(optionsDir, "updates.xml")
+            if (!updatesXml.exists()) {
+                updatesXml.writeText(
+                    """<application>
+  <component name="UpdatesConfigurable">
+    <option name="CHECK_NEEDED" value="false" />
+    <option name="PLUGINS_CHECK_NEEDED" value="false" />
+    <option name="SHOW_WHATS_NEW_EDITOR" value="false" />
   </component>
 </application>"""
                 )

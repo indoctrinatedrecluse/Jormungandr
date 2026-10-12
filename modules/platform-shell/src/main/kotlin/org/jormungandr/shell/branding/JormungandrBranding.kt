@@ -74,6 +74,7 @@ object JormungandrBranding {
         patchConsentOptions()
         replaceUpstreamAboutAction()
         registerUpdateActions()
+        suppressUpstreamJetBrainsUpdates()
         rebrandActionManager()
         installGlobalWindowInterceptor()
         rebrandAllWindows()
@@ -287,6 +288,90 @@ object JormungandrBranding {
             LOG.info("Registered Jörmungandr CheckForUpdatesAction.")
         } catch (e: Throwable) {
             LOG.warn("Could not register CheckForUpdates action (non-fatal)", e)
+        }
+    }
+
+    /**
+     * Suppresses upstream JetBrains automatic update checks, background polling,
+     * and update notifications so users only receive Jörmungandr updates.
+     */
+    fun suppressUpstreamJetBrainsUpdates() {
+        try {
+            // 1. Disable update checks in UpdateSettings
+            val updateSettingsClass = Class.forName("com.intellij.openapi.updateSettings.impl.UpdateSettings")
+            val getInstance = updateSettingsClass.getMethod("getInstance")
+            val updateSettings = getInstance.invoke(null)
+            if (updateSettings != null) {
+                try {
+                    val setCheckNeeded = updateSettingsClass.getMethod("setCheckNeeded", Boolean::class.javaPrimitiveType)
+                    setCheckNeeded.invoke(updateSettings, false)
+                } catch (_: Throwable) {}
+                try {
+                    val setPluginsCheckNeeded = updateSettingsClass.getMethod("setPluginsCheckNeeded", Boolean::class.javaPrimitiveType)
+                    setPluginsCheckNeeded.invoke(updateSettings, false)
+                } catch (_: Throwable) {}
+                try {
+                    val setPluginsAutoUpdateEnabled = updateSettingsClass.getMethod("setPluginsAutoUpdateEnabled", Boolean::class.javaPrimitiveType)
+                    setPluginsAutoUpdateEnabled.invoke(updateSettings, false)
+                } catch (_: Throwable) {}
+                try {
+                    val setShowWhatsNewEditor = updateSettingsClass.getMethod("setShowWhatsNewEditor", Boolean::class.javaPrimitiveType)
+                    setShowWhatsNewEditor.invoke(updateSettings, false)
+                } catch (_: Throwable) {}
+
+                // Also update persistent state
+                try {
+                    val getState = updateSettingsClass.getMethod("getState")
+                    val state = getState.invoke(updateSettings)
+                    if (state != null) {
+                        try {
+                            val stateCheck = state.javaClass.getMethod("setCheckNeeded", Boolean::class.javaPrimitiveType)
+                            stateCheck.invoke(state, false)
+                        } catch (_: Throwable) {}
+                        try {
+                            val statePlugins = state.javaClass.getMethod("setPluginsCheckNeeded", Boolean::class.javaPrimitiveType)
+                            statePlugins.invoke(state, false)
+                        } catch (_: Throwable) {}
+                    }
+                } catch (_: Throwable) {}
+            }
+
+            // 2. Cancel any scheduled background update checks in UpdateCheckerService
+            try {
+                val updateServiceClass = Class.forName("com.intellij.openapi.updateSettings.impl.UpdateCheckerService")
+                val getServiceInstance = updateServiceClass.getMethod("getInstance")
+                val updateService = getServiceInstance.invoke(null)
+                if (updateService != null) {
+                    val cancelChecks = updateServiceClass.getMethod("cancelChecks")
+                    cancelChecks.invoke(updateService)
+                }
+            } catch (_: Throwable) {}
+
+            // 3. Mute upstream NotificationGroups for IDE and Plugin Updates
+            try {
+                val notifConfigClass = Class.forName("com.intellij.notification.impl.NotificationsConfigurationImpl")
+                val getNotifConfig = notifConfigClass.getMethod("getInstanceImpl")
+                val notifConfig = getNotifConfig.invoke(null)
+                if (notifConfig != null) {
+                    val noneType = Class.forName("com.intellij.notification.NotificationDisplayType").getField("NONE").get(null)
+                    val changeSettingsMethod = notifConfigClass.getMethod(
+                        "changeSettings",
+                        String::class.java,
+                        Class.forName("com.intellij.notification.NotificationDisplayType"),
+                        Boolean::class.javaPrimitiveType,
+                        Boolean::class.javaPrimitiveType
+                    )
+                    for (groupId in listOf("IDE and Plugin Updates", "Platform Updates", "Updates")) {
+                        try {
+                            changeSettingsMethod.invoke(notifConfig, groupId, noneType, false, false)
+                        } catch (_: Throwable) {}
+                    }
+                }
+            } catch (_: Throwable) {}
+
+            LOG.info("Successfully suppressed upstream JetBrains update checks and notifications.")
+        } catch (e: Throwable) {
+            LOG.warn("Could not suppress upstream JetBrains updates (non-fatal)", e)
         }
     }
 

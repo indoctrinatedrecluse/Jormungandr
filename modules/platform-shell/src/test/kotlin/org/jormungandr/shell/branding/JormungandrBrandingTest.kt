@@ -131,4 +131,11 @@ class JormungandrBrandingTest {
         JormungandrBranding.rebrandSingleComponent(logoLabel)
         assertNotNull(logoLabel.icon, "Logo label icon must be populated with Jörmungandr icon")
     }
+
+    @Test
+    fun `test suppressUpstreamJetBrainsUpdates executes safely and disables update checks`() {
+        assertDoesNotThrow {
+            JormungandrBranding.suppressUpstreamJetBrainsUpdates()
+        }
+    }
 }

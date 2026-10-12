@@ -323,6 +323,11 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
                 new_args.append("-Didea.application.name=Jörmungandr")
                 new_args.append("-Didea.platform.prefix=Idea")
                 new_args.append("-Didea.required.plugins.id=org.jormungandr.ide")
+                new_args.append("-Dide.no.platform.update=true")
+                new_args.append("-Didea.no.platform.update=true")
+                new_args.append("-Dide.check.update=false")
+                new_args.append("-Didea.check.updates=false")
+                new_args.append("-Dupdates.disabled=true")
                 launch["additionalJvmArguments"] = new_args
 
             product_info["jormungandrVersion"] = clean_tag
@@ -360,6 +365,11 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
         "swing.bufferPerWindow=true",
         "ide.ui.new.file.chooser=true",
         "ide.save.settings.on.exit=true",
+        "ide.no.platform.update=true",
+        "idea.no.platform.update=true",
+        "ide.check.update=false",
+        "idea.check.updates=false",
+        "updates.disabled=true",
         ""
     ]
     with open(idea_properties_path, 'w', encoding='utf-8', newline='\n') as f:
@@ -387,6 +397,11 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
         "-Dide.ui.new.file.chooser=true",
         "-Dide.save.settings.on.exit=true",
         "-Dsplash=true",
+        "-Dide.no.platform.update=true",
+        "-Didea.no.platform.update=true",
+        "-Dide.check.update=false",
+        "-Didea.check.updates=false",
+        "-Dupdates.disabled=true",
     ]
     if os.path.exists(vmoptions_path):
         with open(vmoptions_path, 'r', encoding='utf-8', errors='ignore') as f:
@@ -495,6 +510,16 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
 </application>'''
     with open(os.path.join(options_dir, "laf.xml"), 'w', encoding='utf-8', newline='\n') as f:
         f.write(laf_xml)
+
+    updates_xml = '''<application>
+  <component name="UpdatesConfigurable">
+    <option name="CHECK_NEEDED" value="false" />
+    <option name="PLUGINS_CHECK_NEEDED" value="false" />
+    <option name="SHOW_WHATS_NEW_EDITOR" value="false" />
+  </component>
+</application>'''
+    with open(os.path.join(options_dir, "updates.xml"), 'w', encoding='utf-8', newline='\n') as f:
+        f.write(updates_xml)
 
     # 9. Create root launchers jormungandr.bat & Jormungandr.bat & bin/jormungandr.bat
     bat_content = '''@echo off
