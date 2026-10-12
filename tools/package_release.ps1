@@ -140,7 +140,7 @@ $threadCount = [Math]::Min([Environment]::ProcessorCount, 16)
 Write-Host "Compressing standalone portable package to $portableZip ($threadCount threads, fast deflate)..." -ForegroundColor Yellow
 
 # Archive from stagingRoot using 7-Zip via Python for native Unicode/UTF-16 path safety
-& $pythonExe -c "import subprocess, sys; res = subprocess.run(['7z', 'a', '-tzip', '-mx=3', f'-mmt={sys.argv[4]}', sys.argv[2], sys.argv[3]], cwd=sys.argv[1]); sys.exit(res.returncode)" $stagingRoot $portableZip "Jormungandr-$tag" $threadCount
+& $resolvedPython -c "import subprocess, sys; res = subprocess.run(['7z', 'a', '-tzip', '-mx=3', f'-mmt={sys.argv[4]}', sys.argv[2], sys.argv[3]], cwd=sys.argv[1]); sys.exit(res.returncode)" $stagingRoot $portableZip "Jormungandr-$tag" $threadCount
 
 if (Test-Path $portableZip) {
     $zipSize = [math]::Round((Get-Item $portableZip).Length / 1MB, 2)
