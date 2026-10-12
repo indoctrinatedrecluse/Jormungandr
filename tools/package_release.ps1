@@ -141,10 +141,13 @@ Write-Host "Compressing standalone portable package to $portableZip ($threadCoun
 
 # Archive from stagingRoot so the archive contains Jormungandr-$tag/... folder
 Push-Location $stagingRoot
+$prevDir = [System.IO.Directory]::GetCurrentDirectory()
+[System.IO.Directory]::SetCurrentDirectory($stagingRoot)
 try {
     $relZip = "..\Jormungandr-$tag-windows-x64.zip"
     & 7z a -tzip -mx=3 -mmt=$threadCount $relZip "Jormungandr-$tag"
 } finally {
+    [System.IO.Directory]::SetCurrentDirectory($prevDir)
     Pop-Location
 }
 

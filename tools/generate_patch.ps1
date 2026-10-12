@@ -133,9 +133,12 @@ try {
     Write-Host "Compressing smart delta patch package to $patchZipPath..." -ForegroundColor Yellow
     $tempPatchZip = Join-Path $tempDir $patchZipName
     Push-Location $patchStagingDir
+    $prevDir = [System.IO.Directory]::GetCurrentDirectory()
+    [System.IO.Directory]::SetCurrentDirectory($patchStagingDir)
     try {
         & 7z a -tzip -mx=7 -mmt=8 $tempPatchZip "*" | Out-Null
     } finally {
+        [System.IO.Directory]::SetCurrentDirectory($prevDir)
         Pop-Location
     }
     Move-Item -Path $tempPatchZip -Destination $patchZipPath -Force
