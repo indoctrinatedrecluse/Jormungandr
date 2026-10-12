@@ -12,3 +12,4 @@ D:\Projects\Jörmungandr
 3. **Run Scripts**: Always use `tools/run.ps1` (PowerShell) or `tools/run.sh` (Bash) from the project root for verification, dependency healing, test runs, and launching the IDE.
 4. **Git Repository**: The repository remote is `https://github.com/indoctrinatedrecluse/Jormungandr.git`. Keep the local `main` branch synced with `origin/main`.
 5. **Coding & License Standards**: Maintain Apache 2.0 attribution for `indoctrinatedrecluse (2025–2026)` and upstream JetBrains IntelliJ Platform.
+6. **Release Packaging & Portable Architecture**: Follow `docs/PORTABLE_DISTRIBUTION_SPEC.md` and `.agents/rules/packaging.md`. All bundled plugins MUST be registered in `product-info.json` under `bundledPlugins` and `layout`, portable paths MUST resolve via `${idea.home.path}/portable-data/...` in `bin/idea.properties` (never relative `-Didea.*.path` in `.vmoptions`), and both root `.bat` launchers and `bin/idea.exe` must function identically.
