@@ -4,7 +4,7 @@ package org.jormungandr.shell.update
  * Version metadata and semantic version comparison utilities for Jörmungandr.
  */
 object AppVersion {
-    const val CURRENT = "1.3.0"
+    const val CURRENT = "1.4.0"
     const val REPO_OWNER = "indoctrinatedrecluse"
     const val REPO_NAME = "Jormungandr"
 

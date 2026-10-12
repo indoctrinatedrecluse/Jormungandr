@@ -1,10 +1,11 @@
-# tools/package_release.ps1
-# Builds and packages Jörmungandr standalone portable zip and plugin distribution.
+param(
+    [string]$Tag = "v1.4.0"
+)
 
 $ErrorActionPreference = "Stop"
 
 $ProjectRoot = (Resolve-Path "$PSScriptRoot\..").Path
-$tag = "v1.3.0"
+$tag = $Tag
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "  Packaging Jormungandr Release: $tag" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
@@ -133,14 +134,15 @@ foreach ($cf in $criticalFiles) {
 }
 Write-Host "[OK] All critical launch and branding files verified successfully in staging!" -ForegroundColor Green
 
-# Compress with 7-Zip (multi-threaded)
+# Compress with 7-Zip (fast multi-threaded deflate)
 $portableZip = Join-Path $distDir "Jormungandr-$tag-windows-x64.zip"
-Write-Host "Compressing standalone portable package to $portableZip (multi-threaded)..." -ForegroundColor Yellow
+$threadCount = [Math]::Min([Environment]::ProcessorCount, 16)
+Write-Host "Compressing standalone portable package to $portableZip ($threadCount threads, fast deflate)..." -ForegroundColor Yellow
 
 # Archive from stagingRoot so the archive contains Jormungandr-$tag/... folder
 Push-Location $stagingRoot
 try {
-    & 7z a -tzip -mx=5 -mmt=8 $portableZip "Jormungandr-$tag"
+    & 7z a -tzip -mx=3 -mmt=$threadCount $portableZip "Jormungandr-$tag"
 } finally {
     Pop-Location
 }
@@ -152,11 +154,17 @@ if (Test-Path $portableZip) {
     Write-Error "Failed to produce $portableZip"
 }
 
-# 3. Smart Delta Patch Package (v1.2.0 -> v1.3.0)
-$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.2.0-windows-x64.zip"
+# 3. Smart Delta Patch Package
+$baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.3.0-windows-x64.zip"
+$fromVer = "1.3.0"
+if (-not (Test-Path $baselineZip)) {
+    $baselineZip = Join-Path $ProjectRoot "build\baseline\Jormungandr-v1.2.0-windows-x64.zip"
+    $fromVer = "1.2.0"
+}
 if (Test-Path $baselineZip) {
-    Write-Host "Generating Smart Delta Patch against v1.2.0 baseline..." -ForegroundColor Yellow
-    & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion "1.2.0" -ToVersion "1.3.0" -OutputDir $distDir
+    $toVer = $tag.TrimStart('v')
+    Write-Host "Generating Smart Delta Patch against v$fromVer baseline..." -ForegroundColor Yellow
+    & "$ProjectRoot\tools\generate_patch.ps1" -BaselineZip $baselineZip -TargetDir $stagingDir -FromVersion $fromVer -ToVersion $toVer -OutputDir $distDir
 }
 
 # 4. Turnkey Windows Installer (.exe via Inno Setup)

@@ -13,7 +13,7 @@ import shutil
 import time
 import zipfile
 
-def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
+def patch_portable_ide(staging_dir, resources_dir, tag_name="1.4.0"):
     staging_dir = os.path.abspath(staging_dir)
     resources_dir = os.path.abspath(resources_dir)
     
@@ -547,5 +547,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage: patch_portable_ide.py <staging_dir> <resources_dir> [tag_name]")
         sys.exit(1)
-    tag = sys.argv[3] if len(sys.argv) > 3 else "1.3.0"
+    tag = sys.argv[3] if len(sys.argv) > 3 else "1.4.0"
     patch_portable_ide(sys.argv[1], sys.argv[2], tag)
