@@ -214,8 +214,42 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         product_info["dataDirectoryName"] = "Jormungandr1.0"
         product_info["svgIconPath"] = "bin/jormungandr.svg"
 
+        # Register custom plugins in bundledPlugins and layout
+        bundled_plugins = product_info.setdefault("bundledPlugins", [])
+        layout = product_info.setdefault("layout", [])
+
+        custom_plugins = [
+            ("org.jormungandr.ide", "platform-shell"),
+            ("org.jormungandr.jupyter", "jupyter-integration"),
+            ("org.jormungandr.dataframe", "dataframe-viewer"),
+            ("org.jormungandr.database", "database-suite"),
+        ]
+
+        existing_layout_names = {entry.get("name"): idx for idx, entry in enumerate(layout)}
+
+        for plugin_id, plugin_dir_name in custom_plugins:
+            if plugin_id not in bundled_plugins:
+                bundled_plugins.append(plugin_id)
+                print(f"    [+] Added {plugin_id} to bundledPlugins in product-info.json")
+
+            plugin_lib_path = os.path.join(staging_dir, "plugins", plugin_dir_name, "lib")
+            if os.path.isdir(plugin_lib_path):
+                jars = sorted([f for f in os.listdir(plugin_lib_path) if f.endswith('.jar')])
+                classpath_entries = [f"plugins/{plugin_dir_name}/lib/{jar}" for jar in jars]
+                layout_entry = {
+                    "name": plugin_id,
+                    "kind": "plugin",
+                    "classPath": classpath_entries
+                }
+                if plugin_id in existing_layout_names:
+                    layout[existing_layout_names[plugin_id]] = layout_entry
+                else:
+                    layout.append(layout_entry)
+                print(f"    [+] Registered {plugin_id} layout ({len(classpath_entries)} jars) in product-info.json")
+
         if "launch" in product_info:
             for launch in product_info["launch"]:
+                launch["dataDirectoryName"] = "Jormungandr1.0"
                 cp_jars = launch.get("bootClassPathJarNames", [])
                 if "jormungandr-bootstrap.jar" in cp_jars:
                     cp_jars.remove("jormungandr-bootstrap.jar")
@@ -275,18 +309,13 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
     # 4. Update bin/idea64.exe.vmoptions
     vmoptions_path = os.path.join(bin_dir, "idea64.exe.vmoptions")
     print(" -> Updating bin/idea64.exe.vmoptions...")
-    vm_additions = [
-        "",
+    vm_required = [
         "-Didea.vendor.name=indoctrinatedrecluse",
         "-Didea.product.name=Jörmungandr",
         "-Didea.application.name=Jörmungandr",
         "-Didea.platform.prefix=Idea",
         "-Didea.paths.selector=Jormungandr1.0",
         "-Didea.required.plugins.id=org.jormungandr.ide",
-        "-Didea.config.path=../portable-data/config",
-        "-Didea.system.path=../portable-data/system",
-        "-Didea.plugins.path=../portable-data/plugins",
-        "-Didea.log.path=../portable-data/log",
         "-Djb.consents.confirmation.enabled=false",
         "-Deua.consents.confirmation.enabled=false",
         "-Didea.initially.ask.config=false",
@@ -299,50 +328,56 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.3.0"):
         "-Dide.ui.new.file.chooser=true",
         "-Dide.save.settings.on.exit=true",
         "-Dsplash=true",
-        ""
     ]
     if os.path.exists(vmoptions_path):
         with open(vmoptions_path, 'r', encoding='utf-8', errors='ignore') as f:
-            existing_vm = f.read()
-        if "-Didea.product.name=Jörmungandr" not in existing_vm:
-            with open(vmoptions_path, 'a', encoding='utf-8', newline='\n') as f:
-                f.write('\n'.join(vm_additions))
+            lines = [line.strip() for line in f.readlines()]
+        # Strip any relative -Didea.*.path options that override idea.properties
+        clean_lines = [
+            line for line in lines
+            if not any(line.startswith(prefix) for prefix in [
+                "-Didea.config.path=",
+                "-Didea.system.path=",
+                "-Didea.plugins.path=",
+                "-Didea.log.path="
+            ])
+        ]
+        for req in vm_required:
+            key = req.split('=', 1)[0]
+            clean_lines = [line for line in clean_lines if not line.startswith(key + "=")]
+            clean_lines.append(req)
+        with open(vmoptions_path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('\n'.join(clean_lines) + '\n')
 
     # 5. Clone executables and .vmoptions in bin for seamless execution
     idea64_exe = os.path.join(bin_dir, "idea64.exe")
     for exe_name in ["idea.exe", "jormungandr.exe", "jormungandr64.exe"]:
         dst_exe = os.path.join(bin_dir, exe_name)
-        if os.path.exists(idea64_exe) and not os.path.exists(dst_exe):
+        if os.path.exists(idea64_exe):
             shutil.copy2(idea64_exe, dst_exe)
-            print(f"    [+] Created {exe_name} in bin/")
+            print(f"    [+] Created/Updated {exe_name} in bin/")
 
     for opt_name in ["idea.exe.vmoptions", "jormungandr.exe.vmoptions", "jormungandr64.exe.vmoptions"]:
         dst_opt = os.path.join(bin_dir, opt_name)
-        if os.path.exists(vmoptions_path) and not os.path.exists(dst_opt):
+        if os.path.exists(vmoptions_path):
             shutil.copy2(vmoptions_path, dst_opt)
-            print(f"    [+] Created {opt_name} in bin/")
+            print(f"    [+] Created/Updated {opt_name} in bin/")
 
     # 6. Patch bin/idea.bat
     idea_bat = os.path.join(bin_dir, "idea.bat")
     if os.path.exists(idea_bat):
         print(" -> Patching bin/idea.bat...")
         with open(idea_bat, 'r', encoding='latin1') as f:
-            bat_lines = f.readlines()
-        new_bat = []
-        for line in bat_lines:
-            if line.strip().upper() == '@ECHO OFF':
-                new_bat.append(line)
-                new_bat.append('if not exist "%IDE_HOME%\\portable-data\\plugins\\platform-shell" (\n')
-                new_bat.append('    if exist "%IDE_HOME%\\jormungandr-plugins" (\n')
-                new_bat.append('        xcopy /E /I /Q /Y "%IDE_HOME%\\jormungandr-plugins" "%IDE_HOME%\\portable-data\\plugins" >nul 2>&1\n')
-                new_bat.append('    )\n')
-                new_bat.append(')\n')
-                continue
-            new_bat.append(line)
-            if 'SET "CLASS_PATH=%IDE_HOME%\\lib\\platform-loader.jar"' in line:
-                new_bat.append('SET "CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\jormungandr-bootstrap.jar"\n')
+            bat_text = f.read()
+        bat_text = bat_text.replace("-Didea.vendor.name=JetBrains", "-Didea.vendor.name=indoctrinatedrecluse")
+        bat_text = bat_text.replace("-Didea.paths.selector=IdeaIC2024.3", "-Didea.paths.selector=Jormungandr1.0")
+        if "jormungandr-bootstrap.jar" not in bat_text and 'SET "CLASS_PATH=%IDE_HOME%\\lib\\platform-loader.jar"' in bat_text:
+            bat_text = bat_text.replace(
+                'SET "CLASS_PATH=%IDE_HOME%\\lib\\platform-loader.jar"',
+                'SET "CLASS_PATH=%IDE_HOME%\\lib\\platform-loader.jar"\nSET "CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\jormungandr-bootstrap.jar"'
+            )
         with open(idea_bat, 'w', encoding='latin1', newline='\r\n') as f:
-            f.writelines(new_bat)
+            f.write(bat_text)
 
     # 7. Copy launcher icons in bin
     ico_src = os.path.join(resources_dir, "icons", "jormungandr.ico")
