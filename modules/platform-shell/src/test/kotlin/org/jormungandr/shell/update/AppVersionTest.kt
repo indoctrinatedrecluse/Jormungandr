@@ -34,11 +34,11 @@ class AppVersionTest {
 
     @Test
     fun `test dynamic version override for testing`() {
-        assertEquals("1.4.0", AppVersion.CURRENT)
-        AppVersion.overrideVersionForTesting = "1.5.0"
         assertEquals("1.5.0", AppVersion.CURRENT)
-        assertFalse(AppVersion.isNewer("1.5.0", AppVersion.CURRENT))
-        assertTrue(AppVersion.isNewer("1.6.0", AppVersion.CURRENT))
+        AppVersion.overrideVersionForTesting = "1.6.0"
+        assertEquals("1.6.0", AppVersion.CURRENT)
+        assertFalse(AppVersion.isNewer("1.6.0", AppVersion.CURRENT))
+        assertTrue(AppVersion.isNewer("1.7.0", AppVersion.CURRENT))
     }
 
     @Test

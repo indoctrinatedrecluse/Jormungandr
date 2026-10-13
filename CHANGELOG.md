@@ -5,6 +5,47 @@ All notable changes to the **Jörmungandr IDE** project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-13
+
+### 🚀 Flagship Studios Expansion & High-Performance Release Architecture
+
+The **v1.5.0** release introduces five flagship engineering studios spanning Vector Search & RAG, Spatial GIS Analysis, Data Quality Contracts, Synthetic Data Generation with Differential Privacy, and Multimodal Vision/Audio Annotation, paired with multi-threaded release compression and cryptographic checksum verification.
+
+---
+
+### 🌟 Key Feature Highlights
+
+#### 🧠 1. Vector DB & RAG Studio
+- **Multi-Engine Vector Connectivity**: Native connection inspection and collection exploration for ChromaDB, Pinecone, LanceDB, Milvus, Qdrant, and Weaviate.
+- **Dimensionality Reduction Projection Canvas**: Real-time 2D embedding space visualization (PCA/UMAP) rendering cluster structures, interactive query projection, and nearest-neighbor cosine distance edges.
+- **RAG Document Indexer & Test Playground**: Direct similarity querying and top-k nearest neighbor retrieval with visual score overlays.
+
+#### 🗺️ 2. Spatial & GeoData Studio
+- **Interactive Swing GIS Vector Canvas**: Real-time vector layer rendering supporting point scatters, linestring trajectories, and multi-point polygons with smooth panning and zooming.
+- **Interactive Spatial Bounding Box Filter**: Interactive drag-to-select spatial bounding box filtering that synchronizes with active dataframe rows.
+- **Layer Centroid Computation & GeoPandas Export**: Centroid calculation and one-click code generation for GeoPandas and GeoJSON pipelines.
+
+#### 📜 3. Data Contracts & Expectations Studio
+- **Declarative Quality Verification Engine**: Validates tabular data against `NOT_NULL`, `VALUE_RANGE`, `REGEX_MATCH`, `ALLOWED_SET`, `UNIQUE_RATIO`, and `DATA_TYPE` expectations.
+- **Pandera & Great Expectations Code Generator**: Automatically translates UI expectation suites into production Python scripts using Pandera `pa.DataFrameSchema` and Great Expectations `gx.ExpectationSuite`.
+
+#### 🧪 4. Synthetic Data & Differential Privacy Studio
+- **Parametric Privacy Budget & Moments Cloning**: Replicates empirical marginal distributions with mathematically calibrated Laplace, Gaussian, and Exponential noise mechanisms.
+- **Privacy & Fidelity Scoring**: Dynamic privacy ($\epsilon$) vs. statistical fidelity tradeoff analyzer with before/after distribution moment comparisons.
+- **Synthetic Dataset Export**: One-click synthesis and clipboard/file CSV export.
+
+#### 🎙️ 5. Multimodal AI Annotation & Inspection Studio
+- **Vision Annotation Canvas**: Visual object detection bounding box inspector and editor with class labels, confidence scores, and coordinate metrics.
+- **Audio Waveform & Spectrogram Canvas**: Interactive audio playback timeline rendering amplitude envelopes, spectrogram frequency heatmaps, and Whisper timestamped transcript cues.
+
+#### ⚡ 6. Multi-Threaded Compression & Cryptographic Checksum Integrity
+- **Parallel Release Compression (`tools/fast_compress.py`)**: 7-Zip multithreaded compression with buffered Python fallback and automatic SHA-256 manifest generation.
+- **Cryptographic Updater Verification**: Turnkey update script (`installer/jormungandr-updater.ps1`) verifies remote SHA-256 signatures before applying updates.
+- **Hardware Telemetry G1GC Compaction**: One-click JVM heap compaction and soft cache purge in `HardwareTelemetryPanel`.
+- **RAG Quickstart Template**: Added `VECTOR_RAG` starter template to Welcome Screen for rapid LanceDB application scaffolding.
+
+---
+
 ## [1.4.0] - 2026-10-12
 
 ### 🚀 Complete Brand Overhaul & Distribution Pipeline Polish

@@ -635,52 +635,52 @@ Official binaries and extension packages are published on [GitHub Releases](http
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Option A: Smart Delta Patch Auto-Update (`Jormungandr-Patch-v1.3.0-to-v1.4.0.zip`)
+#### Option A: Smart Delta Patch Auto-Update (`Jormungandr-Patch-v1.4.0-to-v1.5.0.zip`)
 *Recommended for existing users updating from a previous version.*
 - **Automated In-App**: In Jörmungandr, open `Help` &rarr; `Check for Jörmungandr Updates...` (or via `About Jörmungandr`). Jörmungandr automatically detects the patch, downloads only changed files (~25 MB vs ~1.27 GB), verifies checksums, and applies the update with a single click.
-- **Manual Download**: Download `Jormungandr-Patch-v1.3.0-to-v1.4.0.zip` directly from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+- **Manual Download**: Download `Jormungandr-Patch-v1.4.0-to-v1.5.0.zip` directly from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 
 ---
 
-#### Option B: Turnkey Windows Installer (`Jormungandr-Setup-v1.4.0-x64.exe`)
+#### Option B: Turnkey Windows Installer (`Jormungandr-Setup-v1.5.0-x64.exe`)
 *Recommended for new Windows installations with Start Menu shortcuts, desktop launcher, and native file associations.*
 
-1. **Download**: Download `Jormungandr-Setup-v1.4.0-x64.exe` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+1. **Download**: Download `Jormungandr-Setup-v1.5.0-x64.exe` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 2. **Run Installer**: Execute the installer and follow the guided setup wizard.
 3. **Launch**: Open Jörmungandr from your Desktop shortcut or Start Menu.
 
 ---
 
-#### Option C: Standalone Portable IDE (`Jormungandr-v1.4.0-windows-x64.zip`)
+#### Option C: Standalone Portable IDE (`Jormungandr-v1.5.0-windows-x64.zip`)
 *Best for users who want an instant, dedicated data science and machine learning IDE without needing an existing IntelliJ, PyCharm, or Java installation.*
 
-1. **Download**: Download `Jormungandr-v1.4.0-windows-x64.zip` from the [Latest Release](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+1. **Download**: Download `Jormungandr-v1.5.0-windows-x64.zip` from the [Latest Release](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 2. **Extract**: Unzip the archive to any directory on your filesystem (e.g. `C:\Tools\Jormungandr` or `D:\Jormungandr`).
 3. **Launch**: Double-click **`Jormungandr.bat`** (or execute `bin\idea64.exe`).
    - The standalone portable IDE comes completely self-contained with the transformed IntelliJ Platform CE base, bundled Java 21 LTS JetBrains Runtime (JBR), and all Jörmungandr core extensions pre-configured.
 
 ---
 
-#### Option D: Modular Extension Bundle (`Jormungandr-Plugin-v1.4.0.zip`)
+#### Option D: Modular Extension Bundle (`Jormungandr-Plugin-v1.5.0.zip`)
 *Best for users who already have an existing IntelliJ Platform IDE installed (such as IntelliJ IDEA Community/Ultimate, PyCharm Community/Professional, or DataGrip) and want to integrate Jörmungandr's full analytics, notebook, and machine learning capabilities into their current environment.*
 
 ##### ⚙️ Method 1: Graphical Install via IDE UI (Recommended & Easiest)
 > [!TIP]
 > **Do NOT unzip the archive.** The IntelliJ Platform installer reads the `.zip` package directly.
 
-1. **Download**: Download `Jormungandr-Plugin-v1.4.0.zip` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
+1. **Download**: Download `Jormungandr-Plugin-v1.5.0.zip` from [GitHub Releases](https://github.com/indoctrinatedrecluse/Jormungandr/releases/latest).
 2. **Open Settings**: In your existing IDE, open the Settings / Preferences dialog:
    - **Windows / Linux**: `File` &rarr; `Settings...` (Shortcut: `Ctrl + Alt + S`)
    - **macOS**: `IntelliJ IDEA` / `PyCharm` &rarr; `Settings...` (Shortcut: `Cmd + ,`)
 3. **Navigate to Plugins**: Select **Plugins** in the left-hand category tree.
 4. **Install from Disk**: Click the **⚙️ (Gear Icon)** located at the top-right of the Plugins panel, and click **`Install Plugin from Disk...`**.
-5. **Select Archive**: Navigate to where you downloaded `Jormungandr-Plugin-v1.4.0.zip`, select it, and click **OK**.
+5. **Select Archive**: Navigate to where you downloaded `Jormungandr-Plugin-v1.5.0.zip`, select it, and click **OK**.
 6. **Restart IDE**: Click **Restart IDE** when prompted. Upon restart, the Jörmungandr subsystems (`Platform Shell`, `Jupyter Integration`, `DataFrame Viewer`, and `Database Suite`) will be activated and accessible in your activity bar and tool window stripes.
 
 ##### 📂 Method 2: Manual Directory Extraction & Placement
 If you are operating in an offline/air-gapped environment or provisioning developer workstations via automation scripts:
 
-1. **Extract**: Unzip `Jormungandr-Plugin-v1.4.0.zip`. The archive contains the 4 modular subsystem directories:
+1. **Extract**: Unzip `Jormungandr-Plugin-v1.5.0.zip`. The archive contains the 4 modular subsystem directories:
    - `platform-shell/` (Core perspective engine, branding, registry, and memory monitor)
    - `jupyter-integration/` (Reactive notebook editor, ZeroMQ client, and 2D AST DAG canvas)
    - `dataframe-viewer/` (Tabular grid, ML training studio, SHAP/PDP explainability, and drift studio)
@@ -1141,6 +1141,33 @@ The **v1.3.0** milestone delivers major quality-of-life enhancements, AI-assiste
    - Interactive Status Bar widget displaying Python runtime version, environment type, and package counts.
 8. **Expanded Data Science Project Wizard Templates**:
    - Added production-grade starter templates: **Lakehouse & Delta Lake Analytics** and **Airflow ETL & Pipeline Orchestration**.
+
+---
+
+### 🚀 11.17 Version 1.5.0: Flagship Studios Expansion & High-Performance Release Architecture
+
+The **v1.5.0** release delivers five major flagship engineering studios, multi-threaded release packaging, and cryptographic update verification:
+
+1. **Vector DB & RAG Studio**:
+   - Multi-engine vector catalog connectivity (ChromaDB, Pinecone, LanceDB, Milvus, Qdrant, Weaviate).
+   - Real-time 2D dimensionality reduction projection canvas with interactive query vector cosine distance links.
+2. **Spatial & GeoData Studio**:
+   - Interactive Swing GIS vector canvas supporting point scatters, linestring trajectories, and multi-point polygons.
+   - Dynamic bounding box filter drawing, centroid calculation, and turnkey GeoPandas export.
+3. **Data Contracts & Expectations Studio**:
+   - Declarative data quality validator with `NOT_NULL`, `VALUE_RANGE`, `REGEX_MATCH`, `ALLOWED_SET`, `UNIQUE_RATIO`, and `DATA_TYPE` rules.
+   - Code generation for Pandera DataFrame schemas and Great Expectations suites.
+4. **Synthetic Data & Differential Privacy Studio**:
+   - Mathematical differential privacy engine (Laplace, Gaussian, Exponential mechanisms).
+   - Dynamic privacy budget ($\epsilon$) vs. statistical fidelity tradeoffs and CSV export.
+5. **Multimodal AI Annotation & Inspection Studio**:
+   - Visual object detection bounding box editor and inspector.
+   - Audio playback canvas with waveform amplitude envelopes, spectrogram frequency heatmaps, and Whisper transcript cues.
+6. **High-Performance Compression & Cryptographic Checksum Integrity**:
+   - Parallel release packaging with multithreaded 7-Zip (`fast_compress.py`) producing SHA-256 manifests.
+   - Automated SHA-256 integrity verification in `jormungandr-updater.ps1` before unpacking.
+   - Telemetry memory compaction (`🧹 Compact Memory (G1GC)`).
+   - Welcome screen `VECTOR_RAG` quickstart template.
 
 ---
 
