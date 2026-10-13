@@ -16,10 +16,11 @@ import zipfile
 def patch_portable_ide(staging_dir, resources_dir, tag_name="1.5.0"):
     staging_dir = os.path.abspath(staging_dir)
     resources_dir = os.path.abspath(resources_dir)
+    clean_tag = tag_name.lstrip("vV")
     
     print(f"[*] Patching portable IDE at: {staging_dir}")
     print(f"[*] Resources directory: {resources_dir}")
-    print(f"[*] Release tag: {tag_name}")
+    print(f"[*] Release tag: {tag_name} (clean: {clean_tag})")
 
     if not os.path.isdir(staging_dir):
         raise FileNotFoundError(f"Staging directory does not exist: {staging_dir}")
