@@ -56,12 +56,24 @@ class HardwareTelemetryPanel : JPanel(BorderLayout(0, 10)) {
             }
         }
 
+        val compactBtn = JButton("🧹 Compact Memory (G1GC)").apply {
+            isFocusPainted = false
+            font = font.deriveFont(Font.BOLD, 10.5f)
+            toolTipText = "Trigger JVM G1GC compaction and purge unused runtime buffers"
+            addActionListener {
+                val msg = HardwareTelemetryService.compactMemory()
+                refreshTelemetry()
+                Messages.showInfoMessage(this@HardwareTelemetryPanel, msg, "Memory Compacted")
+            }
+        }
+
         val refreshBtn = JButton("🔄 Refresh").apply {
             isFocusPainted = false
             font = font.deriveFont(Font.PLAIN, 10.5f)
             addActionListener { refreshTelemetry() }
         }
 
+        actionsPanel.add(compactBtn)
         actionsPanel.add(flushBtn)
         actionsPanel.add(refreshBtn)
         header.add(actionsPanel, BorderLayout.EAST)

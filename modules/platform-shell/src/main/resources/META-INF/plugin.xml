@@ -61,6 +61,13 @@
                     icon="/icons/jormungandr_16.png"
                     factoryClass="org.jormungandr.shell.r.RReplToolWindowFactory"/>
 
+        <!-- Multimodal AI Studio (Vision & Audio Analytics) -->
+        <toolWindow id="Multimodal AI Studio"
+                    anchor="right"
+                    canCloseContent="true"
+                    icon="/icons/jormungandr_16.png"
+                    factoryClass="org.jormungandr.shell.multimodal.MultimodalToolWindowFactory"/>
+
         <!-- Hardware Telemetry & GPU Monitor Subsystem -->
         <applicationService serviceImplementation="org.jormungandr.shell.telemetry.HardwareTelemetryService"/>
         <statusBarWidgetFactory id="org.jormungandr.shell.telemetry.GpuStatusBarWidget"

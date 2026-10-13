@@ -44,6 +44,12 @@
                     canCloseContent="true"
                     icon="/icons/database_16.png"
                     factoryClass="org.jormungandr.database.orchestration.PipelineStudioToolWindowFactory"/>
+
+        <toolWindow id="Vector DB &amp; RAG"
+                    anchor="right"
+                    canCloseContent="true"
+                    icon="/icons/database_16.png"
+                    factoryClass="org.jormungandr.database.vectordb.VectorDbToolWindowFactory"/>
     </extensions>
 
     <actions>

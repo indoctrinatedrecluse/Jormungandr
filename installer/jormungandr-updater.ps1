@@ -35,6 +35,22 @@ $updateSucceeded = $true
 $newVersion = $null
 
 try {
+    # 1.5 Verify SHA-256 checksums if a checksum file is present
+    $shaFiles = Get-ChildItem -Path $StagingDir -Filter "*.sha256" -Recurse -ErrorAction SilentlyContinue
+    foreach ($sf in $shaFiles) {
+        $content = (Get-Content $sf.FullName -Raw).Trim()
+        $expectedHash = $content.Split(" ")[0].Trim()
+        $targetFile = $sf.FullName.Substring(0, $sf.FullName.Length - 7)
+        if (Test-Path $targetFile) {
+            Write-Host "Verifying SHA-256 integrity: $(Split-Path $targetFile -Leaf)..." -ForegroundColor Yellow
+            $actualHash = (Get-FileHash -Path $targetFile -Algorithm SHA256).Hash.ToLower()
+            if ($actualHash -ne $expectedHash.ToLower()) {
+                throw "CRITICAL: SHA-256 mismatch for $targetFile! Expected: $expectedHash, Actual: $actualHash"
+            }
+            Write-Host "[OK] SHA-256 verified successfully: $expectedHash" -ForegroundColor Green
+        }
+    }
+
     # 2. Inspect patch-plan.json (Delta Patch workflow)
     $patchPlanFile = Join-Path $StagingDir "patch-plan.json"
     if (Test-Path $patchPlanFile) {

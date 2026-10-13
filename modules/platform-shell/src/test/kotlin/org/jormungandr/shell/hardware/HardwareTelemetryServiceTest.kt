@@ -27,4 +27,11 @@ class HardwareTelemetryServiceTest {
         assertNotNull(message)
         assertTrue(message.contains("purged and garbage collected"), "Should confirm GC and cache purging")
     }
+
+    @Test
+    fun `test compact memory executes and returns summary`() {
+        val message = HardwareTelemetryService.compactMemory()
+        assertNotNull(message)
+        assertTrue(message.contains("Memory compaction complete"), "Should confirm memory compaction")
+    }
 }

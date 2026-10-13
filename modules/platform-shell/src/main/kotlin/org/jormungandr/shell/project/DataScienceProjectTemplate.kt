@@ -149,6 +149,23 @@ enum class DataScienceProjectTemplate(
             "pydantic>=2.7.0",
             "requests>=2.31.0"
         )
+    ),
+
+    VECTOR_RAG(
+        id = "vector-rag",
+        displayName = "Vector DB & RAG Pipeline",
+        category = "AI Agents & Vector Retrieval",
+        iconEmoji = "⚡",
+        summary = "LanceDB, Chroma, Sentence-Transformers & Hybrid Semantic Search",
+        description = "Production retrieval-augmented generation (RAG) workspace equipped with LanceDB vector databases, document chunking pipelines, and semantic similarity search.",
+        coreLibraries = listOf("lancedb", "sentence-transformers", "langchain", "pyarrow", "duckdb"),
+        defaultDependencies = listOf(
+            "lancedb>=0.6.0",
+            "sentence-transformers>=2.6.0",
+            "langchain>=0.2.0",
+            "pyarrow>=15.0.0",
+            "duckdb>=0.10.0"
+        )
     );
 
     /**
@@ -221,6 +238,13 @@ enum class DataScienceProjectTemplate(
                 files.add(TemplateFile("src/tasks/extract.py", generateAirflowExtractPy()))
                 files.add(TemplateFile("src/tasks/transform.py", generateAirflowTransformPy()))
                 files.add(TemplateFile("tests/test_dag_validation.py", generateAirflowTestPy(projectName)))
+            }
+
+            VECTOR_RAG -> {
+                files.add(TemplateFile("notebooks/01_vector_rag_pipeline.ipynb", generateVectorRagNotebook(projectName), isPrimaryToOpen = true))
+                files.add(TemplateFile("src/vector_store.py", generateVectorStorePy()))
+                files.add(TemplateFile("data/sample_documents.txt", "Attention is all you need.\nRetrieval augmented generation connects parametric LLMs with dense vector indices.\nLanceDB provides serverless fast vector search on top of Apache Arrow.\n"))
+                files.add(TemplateFile("data/lancedb/.gitkeep", ""))
             }
         }
 
@@ -963,5 +987,27 @@ enum class DataScienceProjectTemplate(
             dagbag = DagBag(dag_folder='dags/', include_examples=False)
             assert len(dagbag.import_errors) == 0, f"DAG import errors: {dagbag.import_errors}"
     """.trimIndent()
+
+    private fun generateVectorRagNotebook(projectName: String): String {
+        val model = NotebookModel()
+        model.addCell(
+            CellType.MARKDOWN,
+            "# ⚡ $projectName - Vector DB & RAG Pipeline\n\n" +
+            "This notebook sets up an embedded **LanceDB** vector store, computes sentence embeddings, and executes top-k similarity searches."
+        )
+        model.addCell(
+            CellType.CODE,
+            "import lancedb\nimport pandas as pd\n\n# Connect to serverless embedded LanceDB\ndb = lancedb.connect('./data/lancedb')\nprint('Connected to LanceDB:', db.table_names())"
+        )
+        model.addCell(
+            CellType.CODE,
+            "# Sample RAG Document Corpus\ndata = [\n    {'vector': [0.1 * i for i in range(128)], 'text': 'Attention mechanisms allow transformers to process sequences in parallel.', 'category': 'NLP'},\n    {'vector': [0.2 * i for i in range(128)], 'text': 'Retrieval augmented generation provides factual context to language models.', 'category': 'RAG'},\n    {'vector': [0.05 * i for i in range(128)], 'text': 'LanceDB is a serverless vector database built on top of Apache Arrow.', 'category': 'VectorDB'}\n]\n\ntable = db.create_table('rag_documents', data, mode='overwrite')\nprint('Indexed documents in table: rag_documents')"
+        )
+        model.addCell(
+            CellType.CODE,
+            "# Query nearest neighbors\nquery_vector = [0.19 * i for i in range(128)]\nresults = table.search(query_vector).limit(2).to_pandas()\nresults[['text', 'category', '_distance']]"
+        )
+        return NotebookFormat.writeNotebook(model)
+    }
 }
 

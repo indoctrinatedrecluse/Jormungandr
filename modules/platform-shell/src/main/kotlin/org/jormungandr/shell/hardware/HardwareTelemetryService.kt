@@ -228,4 +228,24 @@ object HardwareTelemetryService {
 
         return "JVM soft caches purged and garbage collected$pythonMessage."
     }
+
+    /**
+     * Executes immediate G1GC compaction and memory trimming across JVM heaps.
+     */
+    fun compactMemory(): String {
+        val beforeFree = Runtime.getRuntime().freeMemory()
+        val beforeTotal = Runtime.getRuntime().totalMemory()
+        val beforeUsedMb = ((beforeTotal - beforeFree) / (1024 * 1024)).coerceAtLeast(0)
+
+        System.gc()
+        System.runFinalization()
+        System.gc()
+
+        val afterFree = Runtime.getRuntime().freeMemory()
+        val afterTotal = Runtime.getRuntime().totalMemory()
+        val afterUsedMb = ((afterTotal - afterFree) / (1024 * 1024)).coerceAtLeast(0)
+        val reclaimedMb = (beforeUsedMb - afterUsedMb).coerceAtLeast(0)
+
+        return "Memory compaction complete: reclaimed ~${reclaimedMb} MB. Current heap utilization: ${afterUsedMb} MB."
+    }
 }

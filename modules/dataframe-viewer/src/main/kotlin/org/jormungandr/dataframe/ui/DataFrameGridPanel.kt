@@ -83,6 +83,11 @@ class DataFrameGridPanel(
     })
     private val qualityStudioView = DataQualityStudioPanel(initialDataFrame)
     private val driftStudioView = org.jormungandr.dataframe.drift.DatasetDriftStudioPanel()
+    private val geoSpatialView = org.jormungandr.dataframe.spatial.GeoSpatialStudioPanel()
+    private val dataContractView = org.jormungandr.dataframe.contract.DataContractStudioPanel(initialDataFrame)
+    private val syntheticDataView = org.jormungandr.dataframe.synthetic.SyntheticDataStudioPanel(initialDataFrame) { synthDf ->
+        dataFrame = synthDf
+    }
     private val filterBuilder = FilterBuilderPanel(initialDataFrame) { compoundFilter ->
         applyCompoundFilter(compoundFilter)
     }
@@ -122,6 +127,9 @@ class DataFrameGridPanel(
         tabbedPane.addTab("Distribution Drift", driftStudioView)
         tabbedPane.addTab("Pivot Studio", pivotView)
         tabbedPane.addTab("In-Memory SQL", sqlView)
+        tabbedPane.addTab("🗺️ Geo & Spatial", geoSpatialView)
+        tabbedPane.addTab("📜 Data Contracts", dataContractView)
+        tabbedPane.addTab("🧪 Synthetic Data & DP", syntheticDataView)
 
         tabbedPane.addChangeListener {
             when (tabbedPane.selectedIndex) {
@@ -135,6 +143,8 @@ class DataFrameGridPanel(
                 8 -> driftStudioView.compare(rawDataFrame, dataFrame)
                 9 -> pivotView.setDataFrame(dataFrame)
                 10 -> sqlView.setDataFrame(dataFrame)
+                12 -> dataContractView.setDataFrame(dataFrame)
+                13 -> syntheticDataView.setSourceDataFrame(dataFrame)
             }
         }
 
