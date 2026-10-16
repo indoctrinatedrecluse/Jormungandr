@@ -5,6 +5,53 @@ All notable changes to the **Jörmungandr IDE** project will be documented in th
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-10-16
+
+### 🚀 Zero-Copy Streaming, Julia REPL, Frontier LLM Red-Teaming & Lakehouse Feature Store
+
+The **v1.6.0** release delivers two major performance enhancements and four flagship engineering studios: Zero-Copy Arrow Flight IPC Streaming, AppCDS Class Data Sharing boot acceleration, a Multi-Mode Julia Language REPL & Package Studio, a Frontier LLM Evaluation & Prompt Red-Teaming Studio, an API & Inference Microservice Workbench with Live Mock Server, and a Feature Store & Time-Travel Lakehouse Studio. This release also introduces four high-fidelity themes and complete suppression of upstream JetBrains update notifications.
+
+---
+
+### 🌟 Key Feature Highlights
+
+#### ✈️ 1. Zero-Copy Apache Arrow Flight & IPC Streaming Connector
+- **Native Arrow IPC Framing Reader & Writer**: Decodes and streams Arrow RecordBatches, framed IPC streams, and Feather datasets directly into Jörmungandr DataFrame structures with zero intermediate deserialization copies.
+- **Arrow Flight Client & Server Connector**: High-throughput telemetry streaming directly into the IDE with microsecond flight ticket resolution and throughput metrics.
+- **Registered Arrow File Types**: `.arrow`, `.feather`, and `.ipc` datasets open directly into the DataFrame Viewer on double-click.
+
+#### ⚡ 2. AppCDS Class Data Sharing & Pre-Indexed Boot Acceleration
+- **Class Data Sharing Archive Generation**: Pre-generates `bin/jormungandr-cds.classlist` during release packaging and pre-indexes runtime classes to accelerate IDE cold start times.
+- **Bootstrap Agent**: Bundles `lib/jormungandr-bootstrap.jar` with `JormungandrPreMain` for early JVM pre-indexing and classloader optimization.
+
+#### 🔴 3. Julia Language REPL & Scientific Package Studio
+- **Multi-Mode Interactive Julia REPL**: Interactive REPL supporting standard execution (`julia>`), package management (`pkg>`), shell mode (`shell>`), and inline documentation (`help?>`).
+- **Scientific Computing & Environment Inspector**: Detects local Julia installations, displays environment manifest status, and executes expressions with rich ANSI color output and LaTeX formatting.
+
+#### 🛡️ 4. Frontier LLM Evaluation & Prompt Red-Teaming Studio
+- **Adversarial Red-Teaming Benchmark**: Automated suites testing prompt injection resilience, DAN persona hijacking, obfuscated cipher payloads, and dual-use exploit resistance.
+- **Hallucination & Grounded Factual Truthfulness**: Evaluates model adherence to grounded context vs. synthetic entrapment probes and technobabble plausibility.
+- **Safety Scorecard & Vulnerability Leaderboard**: Visual breakdown of pass rates, defensive coverage, and latency metrics across tested model targets.
+
+#### ⚡ 5. API & Inference Microservice Workbench with Live Mock Server
+- **Embedded Mock Inference Engine**: Standalone mock server supporting REST, GraphQL, and gRPC endpoint simulations with configurable latency distributions and chaos failure injection.
+- **Interactive HTTP Client Integration**: Direct query verification using standard IntelliJ `.http` collections (`samples/10_api_inference_workbench/model_inference_endpoints.http`).
+
+#### 🏪 6. Feature Store & Time-Travel Lakehouse Studio
+- **Feast & Hopsworks Feature Repository Exploration**: Inspect entities, streaming sources, and feature views directly from local or remote repositories.
+- **Point-in-Time Time-Travel Simulation**: Accurately simulates historical feature snapshots and point-in-time joins to verify zero data leakage for ML training pipelines.
+
+#### 🎨 7. Theme Suite Expansion & JetBrains Update Notification Suppression
+- **4 New Curated Themes**: Added *Nordic Deep Ocean*, *Cyberpunk Neon*, *Gruvbox Dark*, and *Monokai Pro* with complete UITheme definitions and editor color schemes.
+- **Upstream Update Silencing**: Comprehensive suppression of upstream JetBrains platform update checks and notifications via runtime reflection, system properties, and pre-seeded `options/updates.xml` and `options/notifications.xml`.
+- **Help Menu Deduplication**: Automatically replaces and deduplicates the Help Menu so only our branded "Check for Jörmungandr Updates..." action is displayed.
+
+#### 🧪 8. Next-Gen Showcase Samples & Python SDK Expansion
+- **Showcase Directory Expansion**: Added sample suites `samples/07_streaming_and_arrow`, `samples/08_julia_scientific`, `samples/09_llm_eval_and_redteaming`, `samples/10_api_inference_workbench`, `samples/11_feature_store`, and interactive notebook `samples/01_notebooks/07_advanced_studios_showcase.ipynb`.
+- **`jormungandr` Python SDK Triggers**: Added programmatic UI triggers for `show_arrow_flight()`, `show_julia_studio()`, `show_llm_eval()`, `show_api_workbench()`, and `show_feature_store()`.
+
+---
+
 ## [1.5.0] - 2026-10-13
 
 ### 🚀 Flagship Studios Expansion & High-Performance Release Architecture

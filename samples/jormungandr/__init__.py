@@ -35,7 +35,7 @@ import os
 import sys
 import json
 
-__version__ = "1.0.0"
+__version__ = "1.6.0"
 
 def _trigger(action: str, **kwargs):
     payload = {"action": action, **kwargs}

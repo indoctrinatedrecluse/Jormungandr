@@ -9,7 +9,7 @@ import java.io.File
  * immediately reflects the newly applied release.
  */
 object AppVersion {
-    const val DEFAULT_VERSION = "1.5.0"
+    const val DEFAULT_VERSION = "1.6.0"
     const val REPO_OWNER = "indoctrinatedrecluse"
     const val REPO_NAME = "Jormungandr"
 
