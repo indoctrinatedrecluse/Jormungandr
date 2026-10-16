@@ -61,6 +61,13 @@
                     icon="/icons/jormungandr_16.png"
                     factoryClass="org.jormungandr.shell.r.RReplToolWindowFactory"/>
 
+        <!-- Julia Language & Scientific Package Studio -->
+        <toolWindow id="Julia Studio"
+                    anchor="bottom"
+                    canCloseContent="true"
+                    icon="/icons/jormungandr_16.png"
+                    factoryClass="org.jormungandr.shell.julia.JuliaToolWindowFactory"/>
+
         <!-- Multimodal AI Studio (Vision & Audio Analytics) -->
         <toolWindow id="Multimodal AI Studio"
                     anchor="right"
@@ -80,6 +87,11 @@
                     canCloseContent="true"
                     icon="/icons/jormungandr_16.png"
                     factoryClass="org.jormungandr.shell.copilot.local.PromptStudioToolWindowFactory"/>
+        <toolWindow id="LLM Eval &amp; Red-Team"
+                    anchor="right"
+                    canCloseContent="true"
+                    icon="/icons/jormungandr_16.png"
+                    factoryClass="org.jormungandr.shell.llm.eval.LlmEvalToolWindowFactory"/>
         <inline.completion.provider implementation="org.jormungandr.shell.copilot.local.JormungandrInlineCompletionProvider"/>
 
         <!-- Commercial Licensing & Extension Gating Subsystem -->

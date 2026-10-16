@@ -126,6 +126,7 @@ $criticalFiles = @(
     (Join-Path $stagingDir "bin\idea.exe"),
     (Join-Path $stagingDir "bin\idea.exe.vmoptions"),
     (Join-Path $stagingDir "bin\jormungandr64.exe"),
+    (Join-Path $stagingDir "bin\jormungandr-cds.classlist"),
     (Join-Path $stagingDir "lib\jormungandr-bootstrap.jar")
 )
 foreach ($cf in $criticalFiles) {

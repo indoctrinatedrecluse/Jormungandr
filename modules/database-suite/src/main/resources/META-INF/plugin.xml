@@ -50,6 +50,12 @@
                     canCloseContent="true"
                     icon="/icons/database_16.png"
                     factoryClass="org.jormungandr.database.vectordb.VectorDbToolWindowFactory"/>
+
+        <toolWindow id="API &amp; Inference Workbench"
+                    anchor="bottom"
+                    canCloseContent="true"
+                    icon="/icons/database_16.png"
+                    factoryClass="org.jormungandr.database.apiworkbench.ApiWorkbenchToolWindowFactory"/>
     </extensions>
 
     <actions>

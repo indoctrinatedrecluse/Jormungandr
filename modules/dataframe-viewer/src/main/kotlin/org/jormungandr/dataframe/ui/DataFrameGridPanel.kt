@@ -88,6 +88,12 @@ class DataFrameGridPanel(
     private val syntheticDataView = org.jormungandr.dataframe.synthetic.SyntheticDataStudioPanel(initialDataFrame) { synthDf ->
         dataFrame = synthDf
     }
+    private val arrowFlightView = org.jormungandr.dataframe.arrow.ArrowFlightStudioPanel(initialDataFrame) { streamedDf ->
+        dataFrame = streamedDf
+    }
+    private val featureStoreView = org.jormungandr.dataframe.featurestore.FeatureStoreStudioPanel(initialDataFrame) { fsDf ->
+        dataFrame = fsDf
+    }
     private val filterBuilder = FilterBuilderPanel(initialDataFrame) { compoundFilter ->
         applyCompoundFilter(compoundFilter)
     }
@@ -130,6 +136,8 @@ class DataFrameGridPanel(
         tabbedPane.addTab("🗺️ Geo & Spatial", geoSpatialView)
         tabbedPane.addTab("📜 Data Contracts", dataContractView)
         tabbedPane.addTab("🧪 Synthetic Data & DP", syntheticDataView)
+        tabbedPane.addTab("✈️ Arrow Flight / IPC", arrowFlightView)
+        tabbedPane.addTab("🏪 Feature Store", featureStoreView)
 
         tabbedPane.addChangeListener {
             when (tabbedPane.selectedIndex) {
@@ -145,6 +153,8 @@ class DataFrameGridPanel(
                 10 -> sqlView.setDataFrame(dataFrame)
                 12 -> dataContractView.setDataFrame(dataFrame)
                 13 -> syntheticDataView.setSourceDataFrame(dataFrame)
+                14 -> arrowFlightView.setDataFrame(dataFrame)
+                15 -> featureStoreView.setDataFrame(dataFrame)
             }
         }
 
@@ -167,6 +177,8 @@ class DataFrameGridPanel(
             profilerView.setDataFrame(value)
             pivotView.setDataFrame(value)
             sqlView.setDataFrame(value)
+            arrowFlightView.setDataFrame(value)
+            featureStoreView.setDataFrame(value)
             filterBuilder.setDataFrame(value)
             updateMetadataViews()
         }
