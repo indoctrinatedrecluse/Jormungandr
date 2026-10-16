@@ -11,7 +11,7 @@ class DataFrameEditorProvider : FileEditorProvider, DumbAware {
 
     override fun accept(project: Project, file: VirtualFile): Boolean {
         val ext = file.extension?.lowercase() ?: return false
-        return ext == "csv" || ext == "tsv" || ext == "tab" || ext == "parquet"
+        return ext == "csv" || ext == "tsv" || ext == "tab" || ext == "parquet" || ext == "arrow" || ext == "feather" || ext == "ipc"
     }
 
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {

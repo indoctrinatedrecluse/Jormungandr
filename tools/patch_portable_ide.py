@@ -528,6 +528,23 @@ def patch_portable_ide(staging_dir, resources_dir, tag_name="1.5.0"):
     with open(os.path.join(options_dir, "updates.xml"), 'w', encoding='utf-8', newline='\n') as f:
         f.write(updates_xml)
 
+    notifications_xml = '''<application>
+  <component name="NotificationConfiguration">
+    <notification groupId="IDE and Plugin Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="Platform Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="Plugins Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="Plugin Update" displayType="NONE" shouldLog="false" />
+    <notification groupId="Plugin updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="System Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="ide.updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="Plugin Manager Updates" displayType="NONE" shouldLog="false" />
+    <notification groupId="External System Updates" displayType="NONE" shouldLog="false" />
+  </component>
+</application>'''
+    with open(os.path.join(options_dir, "notifications.xml"), 'w', encoding='utf-8', newline='\n') as f:
+        f.write(notifications_xml)
+
     # 9. Create root launchers jormungandr.bat & Jormungandr.bat & bin/jormungandr.bat
     bat_content = '''@echo off
 setlocal

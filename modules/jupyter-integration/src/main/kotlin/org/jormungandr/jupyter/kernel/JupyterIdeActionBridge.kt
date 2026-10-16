@@ -58,6 +58,11 @@ object JupyterIdeActionBridge {
                     "show_r_console" -> openRConsole(project)
                     "show_plots" -> openPlots(project)
                     "show_dag" -> openDag(project)
+                    "show_arrow_flight" -> openArrowFlight(project, path)
+                    "show_julia_studio" -> openJuliaStudio(project)
+                    "show_llm_eval" -> openLlmEval(project)
+                    "show_api_workbench" -> openApiWorkbench(project)
+                    "show_feature_store" -> openFeatureStore(project, path)
                 }
             }
 
@@ -202,6 +207,38 @@ object JupyterIdeActionBridge {
         }
     }
 
+    private fun openArrowFlight(project: Project, path: String?) {
+        activateToolWindow(project, "DataFrame Viewer")
+        if (!path.isNullOrBlank()) {
+            val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace('\\', '/'))
+            if (vFile != null) {
+                FileEditorManager.getInstance(project).openFile(vFile, true)
+            }
+        }
+    }
+
+    private fun openJuliaStudio(project: Project) {
+        activateToolWindow(project, "Julia Studio")
+    }
+
+    private fun openLlmEval(project: Project) {
+        activateToolWindow(project, "LLM Eval & Red-Team")
+    }
+
+    private fun openApiWorkbench(project: Project) {
+        activateToolWindow(project, "API & Inference Workbench")
+    }
+
+    private fun openFeatureStore(project: Project, path: String?) {
+        activateToolWindow(project, "DataFrame Viewer")
+        if (!path.isNullOrBlank()) {
+            val vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.replace('\\', '/'))
+            if (vFile != null) {
+                FileEditorManager.getInstance(project).openFile(vFile, true)
+            }
+        }
+    }
+
     private fun emitNotificationCard(action: String, title: String, path: String?, onOutput: (CellOutput) -> Unit) {
         val (icon, label) = when (action) {
             "show_dataframe" -> "📊" to "DataFrame Viewer & 2D Vector Charting Studio"
@@ -214,6 +251,11 @@ object JupyterIdeActionBridge {
             "show_r_console" -> "🔮" to "R Interactive Statistical REPL Console"
             "show_plots" -> "📈" to "Scientific Plots & Graphics Studio"
             "show_dag" -> "🪐" to "Reactive Execution DAG & AST Dependency Graph"
+            "show_arrow_flight" -> "✈️" to "Apache Arrow Flight & Zero-Copy Streaming Connector"
+            "show_julia_studio" -> "🔴" to "Julia Language REPL & Scientific Package Studio"
+            "show_llm_eval" -> "🛡️" to "LLM Evaluation & Prompt Red-Teaming Studio"
+            "show_api_workbench" -> "⚡" to "API & Inference Microservice Workbench with Live Mock Server"
+            "show_feature_store" -> "🏪" to "Feature Store & Time-Travel Lakehouse Studio"
             else -> "⚡" to action
         }
         val targetDesc = if (!path.isNullOrBlank()) "Target: <code>${File(path).name}</code>" else "Active Studio Window"

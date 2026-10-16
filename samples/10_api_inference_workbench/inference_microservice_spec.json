@@ -1,0 +1,71 @@
+{
+  "service_name": "Jormungandr Model Inference Microservice",
+  "version": "v1.2.0",
+  "port": 8089,
+  "protocols": ["REST", "GraphQL", "gRPC"],
+  "mock_routes": [
+    {
+      "method": "POST",
+      "path": "/v1/models/text-embedding/embed",
+      "protocol": "REST",
+      "latency_ms": 14,
+      "request_schema": {
+        "type": "object",
+        "properties": {
+          "inputs": { "type": "array", "items": { "type": "string" } },
+          "normalize": { "type": "boolean" }
+        },
+        "required": ["inputs"]
+      },
+      "response_status": 200,
+      "response_body": {
+        "model": "bge-large-en-v1.5",
+        "dimension": 1024,
+        "embeddings": [
+          [-0.0421, 0.0815, 0.1294, -0.0152, 0.0384],
+          [0.0118, -0.0934, 0.0481, 0.1105, -0.0623]
+        ],
+        "usage": { "prompt_tokens": 32, "total_tokens": 32 }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "protocol": "REST",
+      "latency_ms": 65,
+      "response_status": 200,
+      "response_body": {
+        "id": "chatcmpl-jorm-882194",
+        "object": "chat.completion",
+        "created": 1728500000,
+        "model": "meta-llama-3.1-8b-instruct",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Jörmungandr is a cutting-edge, portable data science and analytics IDE powered by modern lakehouse tools, Arrow IPC streaming, and local LLM evaluation studios."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": { "prompt_tokens": 18, "completion_tokens": 35, "total_tokens": 53 }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/v1/models/telemetry",
+      "protocol": "REST",
+      "latency_ms": 3,
+      "response_status": 200,
+      "response_body": {
+        "status": "HEALTHY",
+        "active_replicas": 4,
+        "gpu_utilization_pct": 68.4,
+        "vram_allocated_gb": 14.2,
+        "requests_per_sec": 128.5,
+        "p99_latency_ms": 34.2
+      }
+    }
+  ]
+}

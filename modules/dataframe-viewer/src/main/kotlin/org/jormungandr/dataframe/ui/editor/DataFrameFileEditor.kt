@@ -22,12 +22,12 @@ class DataFrameFileEditor(
 
     init {
         val initialDf = try {
-            val isParquet = virtualFile.extension?.equals("parquet", ignoreCase = true) == true
+            val ext = virtualFile.extension?.lowercase() ?: ""
             virtualFile.inputStream.use { input ->
-                if (isParquet) {
-                    ParquetDataLoader.loadFromStream(virtualFile.name, input)
-                } else {
-                    CsvDataLoader.loadFromStream(virtualFile.name, input)
+                when (ext) {
+                    "parquet" -> ParquetDataLoader.loadFromStream(virtualFile.name, input)
+                    "arrow", "feather", "ipc" -> org.jormungandr.dataframe.arrow.ArrowIpcStreamReader.readIpcStream(virtualFile.name, input)
+                    else -> CsvDataLoader.loadFromStream(virtualFile.name, input)
                 }
             }
         } catch (e: Exception) {

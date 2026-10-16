@@ -49,9 +49,13 @@ class ExtensionsAndThemesDialogTest {
         val themeExtension = ThemeExtension()
         val themes = themeExtension.availableThemes.value
 
-        assertEquals(2, themes.size)
+        assertEquals(6, themes.size)
         assertTrue(themes.any { it.id == JormungandrTheme.SOLARIZED_LIGHT.id })
         assertTrue(themes.any { it.id == JormungandrTheme.BUBBLEGUM_BARBIE.id })
+        assertTrue(themes.any { it.id == JormungandrTheme.NORDIC_DEEP_OCEAN.id })
+        assertTrue(themes.any { it.id == JormungandrTheme.CYBERPUNK_NEON.id })
+        assertTrue(themes.any { it.id == JormungandrTheme.GRUVBOX_DARK.id })
+        assertTrue(themes.any { it.id == JormungandrTheme.MONOKAI_PRO.id })
 
         val barbie = themes.first { it.id == JormungandrTheme.BUBBLEGUM_BARBIE.id }
         assertEquals("Bubblegum Barbie", barbie.name)

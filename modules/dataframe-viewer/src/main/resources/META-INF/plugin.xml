@@ -41,6 +41,11 @@
                   fieldName="INSTANCE"
                   extensions="parquet"/>
 
+        <fileType name="Arrow IPC Dataset"
+                  implementationClass="org.jormungandr.dataframe.filetype.ArrowFileType"
+                  fieldName="INSTANCE"
+                  extensions="arrow;feather;ipc"/>
+
         <fileType name="Model Checkpoint"
                   implementationClass="org.jormungandr.dataframe.filetype.ModelCheckpointFileType"
                   fieldName="INSTANCE"

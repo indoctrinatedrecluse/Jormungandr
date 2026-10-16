@@ -99,6 +99,8 @@ htmlcov/
 *.feather
 *.h5
 *.hdf5
+!samples/**/*.parquet
+!samples/**/*.arrow
 
 # --- R Language (Future Integration) ---
 .Rhistory

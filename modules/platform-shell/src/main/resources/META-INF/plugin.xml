@@ -35,6 +35,9 @@
         <themeProvider id="org.jormungandr.theme.solarized.light" path="/themes/SolarizedLight.theme.json"/>
         <themeProvider id="org.jormungandr.theme.bubblegum.barbie" path="/themes/BubblegumBarbie.theme.json"/>
         <themeProvider id="org.jormungandr.theme.nordic.deep.ocean" path="/themes/NordicDeepOcean.theme.json"/>
+        <themeProvider id="org.jormungandr.theme.cyberpunk.neon" path="/themes/CyberpunkNeon.theme.json"/>
+        <themeProvider id="org.jormungandr.theme.gruvbox.dark" path="/themes/GruvboxDark.theme.json"/>
+        <themeProvider id="org.jormungandr.theme.monokai.pro" path="/themes/MonokaiPro.theme.json"/>
 
         <!-- Offline & Air-Gapped Mode Service -->
         <applicationService serviceImplementation="org.jormungandr.shell.offline.OfflineModeService"/>

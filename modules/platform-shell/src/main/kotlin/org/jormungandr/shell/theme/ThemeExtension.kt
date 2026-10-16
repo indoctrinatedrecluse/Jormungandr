@@ -59,14 +59,29 @@ class ThemeExtension : JormungandrExtension, ThemeManager {
         JormungandrTheme.SOLARIZED_LIGHT.id to JormungandrTheme.SOLARIZED_LIGHT,
         "org.jormungandr.theme.${JormungandrTheme.SOLARIZED_LIGHT.id}" to JormungandrTheme.SOLARIZED_LIGHT,
         JormungandrTheme.BUBBLEGUM_BARBIE.id to JormungandrTheme.BUBBLEGUM_BARBIE,
-        "org.jormungandr.theme.${JormungandrTheme.BUBBLEGUM_BARBIE.id}" to JormungandrTheme.BUBBLEGUM_BARBIE
+        "org.jormungandr.theme.${JormungandrTheme.BUBBLEGUM_BARBIE.id}" to JormungandrTheme.BUBBLEGUM_BARBIE,
+        JormungandrTheme.NORDIC_DEEP_OCEAN.id to JormungandrTheme.NORDIC_DEEP_OCEAN,
+        "org.jormungandr.theme.${JormungandrTheme.NORDIC_DEEP_OCEAN.id}" to JormungandrTheme.NORDIC_DEEP_OCEAN,
+        JormungandrTheme.CYBERPUNK_NEON.id to JormungandrTheme.CYBERPUNK_NEON,
+        "org.jormungandr.theme.${JormungandrTheme.CYBERPUNK_NEON.id}" to JormungandrTheme.CYBERPUNK_NEON,
+        JormungandrTheme.GRUVBOX_DARK.id to JormungandrTheme.GRUVBOX_DARK,
+        "org.jormungandr.theme.${JormungandrTheme.GRUVBOX_DARK.id}" to JormungandrTheme.GRUVBOX_DARK,
+        JormungandrTheme.MONOKAI_PRO.id to JormungandrTheme.MONOKAI_PRO,
+        "org.jormungandr.theme.${JormungandrTheme.MONOKAI_PRO.id}" to JormungandrTheme.MONOKAI_PRO
     )
 
     private val _currentTheme = MutableStateFlow(JormungandrTheme.SOLARIZED_LIGHT)
     override val currentTheme: StateFlow<JormungandrTheme> = _currentTheme.asStateFlow()
 
     private val _availableThemes = MutableStateFlow(
-        listOf(JormungandrTheme.SOLARIZED_LIGHT, JormungandrTheme.BUBBLEGUM_BARBIE)
+        listOf(
+            JormungandrTheme.SOLARIZED_LIGHT,
+            JormungandrTheme.BUBBLEGUM_BARBIE,
+            JormungandrTheme.NORDIC_DEEP_OCEAN,
+            JormungandrTheme.CYBERPUNK_NEON,
+            JormungandrTheme.GRUVBOX_DARK,
+            JormungandrTheme.MONOKAI_PRO
+        )
     )
     override val availableThemes: StateFlow<List<JormungandrTheme>> = _availableThemes.asStateFlow()
 

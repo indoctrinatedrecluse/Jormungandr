@@ -106,4 +106,28 @@ class ThemeExtensionTest {
         val resUnknown = themeExtension.applyTheme("non.existent.theme")
         assertTrue(resUnknown.isFailure)
     }
+
+    @Test
+    fun `test all themes availability and switching`() {
+        val themeExtension = ThemeExtension()
+        val available = themeExtension.availableThemes.value
+
+        val expectedIds = listOf(
+            "solarized.light",
+            "bubblegum.barbie",
+            "nordic.deep.ocean",
+            "cyberpunk.neon",
+            "gruvbox.dark",
+            "monokai.pro"
+        )
+
+        for (id in expectedIds) {
+            assertTrue(available.any { it.id == id }, "Theme $id should be registered in availableThemes")
+            val res = themeExtension.applyTheme(id)
+            assertTrue(res.isSuccess, "Applying theme $id should succeed")
+            assertEquals(id, themeExtension.currentTheme.value.id)
+            val css = themeExtension.currentTheme.value.toCssVariables()
+            assertTrue(css.contains("--jg-bg:"), "Theme $id CSS variables should contain --jg-bg")
+        }
+    }
 }

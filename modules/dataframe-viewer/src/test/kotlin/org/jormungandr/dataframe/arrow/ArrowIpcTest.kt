@@ -100,4 +100,39 @@ class ArrowIpcTest {
         assertTrue(code.contains("8815"))
         assertTrue(code.contains("my_stream"))
     }
+
+    @Test
+    fun testGenerateSampleArrowFile() {
+        val colTs = ColumnMetadata("timestamp_ms", "Long", DataTypeCategory.INTEGER, totalCount = 6)
+        val colDev = ColumnMetadata("device_id", "String", DataTypeCategory.STRING, totalCount = 6)
+        val colTemp = ColumnMetadata("temperature_c", "Double", DataTypeCategory.FLOAT, totalCount = 6)
+        val colPressure = ColumnMetadata("pressure_kpa", "Double", DataTypeCategory.FLOAT, totalCount = 6)
+        val colVibe = ColumnMetadata("vibration_hz", "Double", DataTypeCategory.FLOAT, totalCount = 6)
+        val colStatus = ColumnMetadata("status", "String", DataTypeCategory.STRING, totalCount = 6)
+        val colAnomaly = ColumnMetadata("anomaly", "Boolean", DataTypeCategory.BOOLEAN, totalCount = 6)
+
+        val df = DataFrame(
+            name = "SensorTelemetry",
+            columns = listOf(colTs, colDev, colTemp, colPressure, colVibe, colStatus, colAnomaly),
+            rows = listOf(
+                listOf(1728500000000L, "edge-node-01", 42.5, 101.32, 12.4, "OPTIMAL", false),
+                listOf(1728500001000L, "edge-node-01", 43.1, 101.28, 13.1, "OPTIMAL", false),
+                listOf(1728500002000L, "edge-node-02", 78.9, 104.50, 48.2, "WARNING", true),
+                listOf(1728500003000L, "edge-node-02", 82.4, 105.10, 52.8, "CRITICAL", true),
+                listOf(1728500004000L, "edge-node-03", 38.0, 100.95, 8.5, "OPTIMAL", false),
+                listOf(1728500005000L, "edge-node-03", 39.2, 101.05, 9.1, "OPTIMAL", false)
+            )
+        )
+
+        val bytes = ArrowIpcStreamReader.writeIpcStream(df)
+        val targetDir = java.io.File("D:/Projects/Jörmungandr/samples/07_streaming_and_arrow")
+        targetDir.mkdirs()
+        val targetFile = java.io.File(targetDir, "sensor_telemetry_batch.arrow")
+        targetFile.writeBytes(bytes)
+
+        assertTrue(targetFile.exists())
+        val readBack = ArrowIpcStreamReader.readIpcStream(targetFile.name, targetFile.readBytes())
+        assertEquals(6, readBack.rowCount)
+        assertEquals(7, readBack.columns.size)
+    }
 }

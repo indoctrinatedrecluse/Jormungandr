@@ -146,3 +146,43 @@ def show_dag(**kwargs):
     """
     _trigger("show_dag", title="Reactive Execution DAG", **kwargs)
 
+def show_arrow_flight(path=None, endpoint=None, **kwargs):
+    """
+    Launch the Apache Arrow Flight & Zero-Copy Streaming Studio.
+    Streams Arrow RecordBatches and connects to Arrow Flight endpoints zero-copy.
+    """
+    p = os.path.abspath(str(path)) if path else None
+    _trigger("show_arrow_flight", path=p, endpoint=endpoint, title="Apache Arrow Flight Studio", **kwargs)
+
+def show_julia_studio(**kwargs):
+    """
+    Launch the Julia Language REPL & Scientific Package Studio.
+    Provides multi-mode REPL (Julia, Package, Shell, Help) and package manager inspector.
+    """
+    _trigger("show_julia_studio", title="Julia Language Studio", **kwargs)
+
+def show_llm_eval(suite_path=None, **kwargs):
+    """
+    Launch the LLM Evaluation & Prompt Red-Teaming Studio.
+    Adversarial evaluation, prompt jailbreak defense, hallucination metrics, and model leaderboards.
+    """
+    p = os.path.abspath(str(suite_path)) if suite_path else None
+    _trigger("show_llm_eval", path=p, title="LLM Evaluation & Red-Team Studio", **kwargs)
+
+def show_api_workbench(spec_path=None, **kwargs):
+    """
+    Launch the API & Inference Microservice Workbench with Live Mock Server.
+    Mock server for REST, GraphQL, and gRPC endpoints with latency simulation and chaos testing.
+    """
+    p = os.path.abspath(str(spec_path)) if spec_path else None
+    _trigger("show_api_workbench", path=p, title="API & Inference Workbench", **kwargs)
+
+def show_feature_store(path=None, **kwargs):
+    """
+    Launch the Feature Store & Time-Travel Lakehouse Studio.
+    Inspect Feast/Hopsworks feature repositories, point-in-time joins, and historical drift.
+    """
+    p = os.path.abspath(str(path)) if path else None
+    _trigger("show_feature_store", path=p, title="Feature Store Studio", **kwargs)
+
+

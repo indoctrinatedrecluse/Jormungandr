@@ -15,7 +15,8 @@ samples/
 │   ├── 03_audio_video_multimedia.ipynb       # Java Sound waveform card & video player launcher
 │   ├── 04_data_science_workflow.ipynb        # End-to-end Pandas, DuckDB in-memory queries & DataFrame Studio
 │   ├── 05_lakehouse_and_pipeline_showcase.ipynb # Lakehouse Parquet Inspector, DuckDB queries & Pipeline DAG
-│   └── 06_ai_ml_and_gpu_showcase.ipynb       # Safetensors Checkpoint Inspector, GPU monitor & Prompt Studio
+│   ├── 06_ai_ml_and_gpu_showcase.ipynb       # Safetensors Checkpoint Inspector, GPU monitor & Prompt Studio
+│   └── 07_advanced_studios_showcase.ipynb    # Interactive showcase for Arrow, Julia, LLM Eval, API & Feature Store
 ├── 02_datasets/                              # Tabular data & distribution drift testing
 │   ├── generate_datasets.py                  # Python generator script for synthetic datasets
 │   ├── customers.csv                         # 250 customer rows for Data Grid & correlation matrix
@@ -27,26 +28,30 @@ samples/
 │   ├── duckdb_lakehouse_queries.sql          # Analytical DuckDB queries over CSV/Parquet
 │   ├── postgres_mysql_schema.sql             # Relational DDL & DML for Database Suite console
 │   └── mock_delta_table/                     # Delta Lake ACID table with _delta_log commits
-│       ├── _delta_log/
-│       │   ├── 00000000000000000000.json     # Initial CREATE commit
-│       │   ├── 00000000000000000001.json     # OPTIMIZE z-order commit
-│       │   └── 00000000000000000002.json     # MERGE upsert commit
 ├── 04_pipeline_orchestration/                # dbt & Airflow DAG Lineage Studio
 │   ├── dbt_analytics_project/                # dbt project structure
-│   │   ├── dbt_project.yml                   # Project manifest
-│   │   └── models/
-│   │       ├── staging/                      # Staging views (stg_customers, stg_orders)
-│   │       └── marts/                        # Mart tables (fct_daily_revenue, dim_customer_churn)
 │   └── airflow_dags/                         # Apache Airflow DAGs
-│       └── customer_etl_dag.py               # Airflow DAG with task dependency operators & lineage launcher
 ├── 05_machine_learning/                      # AI/ML Studio & Model Inspection
 │   ├── train_model_and_shap.py               # Model evaluation, SHAP waterfall calculations & checkpoint inspector
 │   ├── ml_evaluation_report.json             # Model metrics & feature attribution output
 │   ├── resnet50_sample.safetensors           # Binary Safetensors checkpoint for Neural Graph Inspector
-│   ├── generate_mock_checkpoints.py          # Safetensors mock binary generator
 │   └── sample_model_metadata.json            # Metadata for 1-Click model deployment packaging
 ├── 06_r_statistical/                         # R REPL & ggplot2 Visual Interception
 │   └── ggplot2_statistical_analysis.R        # Observational cohort study & ggplot2 visual test
+├── 07_streaming_and_arrow/                   # Apache Arrow IPC Streaming & Flight Connector
+│   ├── arrow_flight_ipc_demo.py              # Zero-copy stream client and Flight connector script
+│   └── sensor_telemetry_batch.arrow          # Framed Apache Arrow IPC binary dataset
+├── 08_julia_scientific/                      # Julia Language REPL & Scientific Package Studio
+│   └── scientific_computing_showcase.jl      # Matrix algebra, RK4 Lorenz attractor ODE & Monte Carlo Pi
+├── 09_llm_eval_and_redteaming/               # LLM Evaluation & Prompt Red-Teaming Studio
+│   ├── prompt_redteam_benchmark.json         # Prompt injection, DAN bypass, and hallucination benchmark
+│   └── run_redteam_eval.py                   # Automated adversarial test runner & scorecard generator
+├── 10_api_inference_workbench/               # API & Inference Microservice Workbench
+│   ├── inference_microservice_spec.json      # Declarative REST, GraphQL, and gRPC mock server specification
+│   └── model_inference_endpoints.http        # Interactive HTTP Client requests for live testing
+├── 11_feature_store/                         # Feast Feature Store & Lakehouse Time-Travel Studio
+│   ├── feature_store.yaml                    # Feast configuration manifest
+│   └── customer_features.py                  # Feature views, entities, and point-in-time join simulation
 └── jormungandr/                              # Standalone Python SDK for programmatic IDE UI triggers
     └── __init__.py                           # Programmatic API: jm.show_dataframe, jm.show_lakehouse, etc.
 ```
@@ -150,5 +155,53 @@ jm.show_dag()
 
 # 9. Scientific Plot Viewer tool window
 jm.show_plots()
+
+# 10. Arrow Flight & Zero-Copy Streaming Studio
+jm.show_arrow_flight("samples/07_streaming_and_arrow/sensor_telemetry_batch.arrow")
+
+# 11. Julia Multi-Mode Scientific REPL Studio
+jm.show_julia_studio()
+
+# 12. Frontier LLM Evaluation & Prompt Red-Teaming Studio
+jm.show_llm_eval("samples/09_llm_eval_and_redteaming/prompt_redteam_benchmark.json")
+
+# 13. API & Inference Microservice Workbench with Live Mock Server
+jm.show_api_workbench("samples/10_api_inference_workbench/inference_microservice_spec.json")
+
+# 14. Feature Store & Time-Travel Lakehouse Studio
+jm.show_feature_store("samples/11_feature_store")
 ```
+
+---
+
+### 9. ✈️ Apache Arrow Flight & Zero-Copy Streaming
+- **Open**: `samples/07_streaming_and_arrow/arrow_flight_ipc_demo.py` or double-click `sensor_telemetry_batch.arrow`.
+- **Test Actions**:
+  - Run the python demo or open the `.arrow` file directly to test instant zero-copy rendering in the DataFrame Viewer.
+  - Switch to the **✈️ Arrow Flight / IPC** tab in the DataFrame Viewer to inspect Flight endpoints and live stream telemetry.
+
+### 10. 🔴 Julia Scientific Computing Studio
+- **Open**: `samples/08_julia_scientific/scientific_computing_showcase.jl`.
+- **Test Actions**:
+  - Open the **Julia Studio** tool window from the bottom dock.
+  - Execute expressions interactively in the REPL or switch modes (`julia>`, `pkg>`, `shell>`, `help?>`).
+
+### 11. 🛡️ LLM Evaluation & Prompt Red-Teaming Studio
+- **Open**: `samples/09_llm_eval_and_redteaming/run_redteam_eval.py`.
+- **Test Actions**:
+  - Run the evaluation script or open the **LLM Eval & Red-Team** tool window.
+  - Review defensive pass rates, hallucination entrapment resistance, and adversarial benchmark scorecards.
+
+### 12. ⚡ API & Inference Microservice Workbench
+- **Open**: `samples/10_api_inference_workbench/model_inference_endpoints.http`.
+- **Test Actions**:
+  - Open the **API & Inference Workbench** tool window from the bottom dock.
+  - Start the mock inference server and click the green "Run" gutter icons in `model_inference_endpoints.http` to test live requests.
+
+### 13. 🏪 Feature Store & Time-Travel Lakehouse
+- **Open**: `samples/11_feature_store/customer_features.py`.
+- **Test Actions**:
+  - Run the feature store demo script or open the **🏪 Feature Store** tab in the DataFrame Viewer.
+  - Verify entity definitions, feature view metadata, and historical point-in-time time-travel simulation without data leakage.
+
 

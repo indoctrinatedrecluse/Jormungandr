@@ -253,5 +253,167 @@ data class JormungandrTheme(
                 "#B48EAD"  // Aurora purple
             )
         )
+
+        /**
+         * "Cyberpunk Neon" theme featuring deep obsidian surfaces,
+         * electric neon cyan, synthwave fuchsia, and matrix green accents.
+         */
+        val CYBERPUNK_NEON = JormungandrTheme(
+            id = "cyberpunk.neon",
+            name = "Cyberpunk Neon",
+            isDark = true,
+            colors = ColorTokens(
+                background = "#0D0B18",
+                secondaryBackground = "#161326",
+                surface = "#1E1A33",
+                foreground = "#F8F8F2",
+                mutedForeground = "#6272A4",
+                border = "#362F58",
+                accent = "#00F0FF",
+                accentHover = "#FF007F",
+                selectionBackground = "#3C2A59",
+                selectionForeground = "#FFFFFF",
+                error = "#FF5555",
+                warning = "#FFB86C",
+                success = "#50FA7B",
+                info = "#8BE9FD"
+            ),
+            dataGrid = DataGridThemeTokens(
+                headerBackground = "#1E1A33",
+                headerForeground = "#00F0FF",
+                rowEvenBackground = "#0D0B18",
+                rowOddBackground = "#161326",
+                gridLineColor = "#362F58",
+                selectionBackground = "#FF007F",
+                selectionForeground = "#FFFFFF"
+            ),
+            syntax = SyntaxThemeTokens(
+                keyword = "#FF79C6",
+                string = "#F1FA8C",
+                number = "#BD93F9",
+                comment = "#6272A4",
+                function = "#50FA7B",
+                variable = "#8BE9FD",
+                type = "#00F0FF"
+            ),
+            chartPalette = listOf(
+                "#00F0FF", // Electric cyan
+                "#FF007F", // Neon fuchsia
+                "#50FA7B", // Matrix green
+                "#BD93F9", // Synthwave purple
+                "#FFB86C", // Neon amber
+                "#F1FA8C", // Laser yellow
+                "#FF5555", // Laser red
+                "#8BE9FD"  // Ice blue
+            )
+        )
+
+        /**
+         * "Gruvbox Dark" retro groove warm sepia palette with earthy tones
+         * and high-contrast pastel accents.
+         */
+        val GRUVBOX_DARK = JormungandrTheme(
+            id = "gruvbox.dark",
+            name = "Gruvbox Dark",
+            isDark = true,
+            colors = ColorTokens(
+                background = "#1D2021",
+                secondaryBackground = "#282828",
+                surface = "#32302F",
+                foreground = "#EBDBB2",
+                mutedForeground = "#928374",
+                border = "#3C3836",
+                accent = "#FE8019",
+                accentHover = "#FABD2F",
+                selectionBackground = "#504945",
+                selectionForeground = "#FBF1C7",
+                error = "#FB4934",
+                warning = "#FABD2F",
+                success = "#B8BB26",
+                info = "#83A598"
+            ),
+            dataGrid = DataGridThemeTokens(
+                headerBackground = "#282828",
+                headerForeground = "#FABD2F",
+                rowEvenBackground = "#1D2021",
+                rowOddBackground = "#282828",
+                gridLineColor = "#3C3836",
+                selectionBackground = "#504945",
+                selectionForeground = "#FBF1C7"
+            ),
+            syntax = SyntaxThemeTokens(
+                keyword = "#FB4934",
+                string = "#B8BB26",
+                number = "#D3869B",
+                comment = "#928374",
+                function = "#8EC07C",
+                variable = "#EBDBB2",
+                type = "#FABD2F"
+            ),
+            chartPalette = listOf(
+                "#FE8019", // Warm orange
+                "#B8BB26", // Gruvbox green
+                "#FABD2F", // Gruvbox yellow
+                "#83A598", // Gruvbox blue
+                "#D3869B", // Gruvbox purple
+                "#8EC07C", // Gruvbox aqua
+                "#FB4934", // Gruvbox red
+                "#EBDBB2"  // Cream
+            )
+        )
+
+        /**
+         * "Monokai Pro" sleek modern dark theme with refined pastel accents
+         * and calibrated brightness.
+         */
+        val MONOKAI_PRO = JormungandrTheme(
+            id = "monokai.pro",
+            name = "Monokai Pro",
+            isDark = true,
+            colors = ColorTokens(
+                background = "#222222",
+                secondaryBackground = "#2D2A2E",
+                surface = "#363337",
+                foreground = "#FCFCFA",
+                mutedForeground = "#727072",
+                border = "#403E41",
+                accent = "#FFD866",
+                accentHover = "#FF6188",
+                selectionBackground = "#49464E",
+                selectionForeground = "#FFFFFF",
+                error = "#FF6188",
+                warning = "#FC9867",
+                success = "#A9DC76",
+                info = "#78DCE8"
+            ),
+            dataGrid = DataGridThemeTokens(
+                headerBackground = "#2D2A2E",
+                headerForeground = "#FFD866",
+                rowEvenBackground = "#222222",
+                rowOddBackground = "#2A272B",
+                gridLineColor = "#403E41",
+                selectionBackground = "#49464E",
+                selectionForeground = "#FCFCFA"
+            ),
+            syntax = SyntaxThemeTokens(
+                keyword = "#FF6188",
+                string = "#A9DC76",
+                number = "#AB9DF2",
+                comment = "#727072",
+                function = "#78DCE8",
+                variable = "#FCFCFA",
+                type = "#FFD866"
+            ),
+            chartPalette = listOf(
+                "#FFD866", // Warm gold
+                "#78DCE8", // Cyan
+                "#A9DC76", // Lime green
+                "#FF6188", // Pink fuchsia
+                "#AB9DF2", // Violet
+                "#FC9867", // Orange
+                "#727072", // Muted gray
+                "#FCFCFA"  // Soft white
+            )
+        )
     }
 }

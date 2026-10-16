@@ -1,0 +1,62 @@
+<scheme name="Monokai Pro" version="142" parent_scheme="Darcula">
+  <metaInfo>
+    <property name="created">2026-10-16</property>
+    <property name="ide">Jormungandr</property>
+    <property name="ideVersion">1.5.0</property>
+  </metaInfo>
+  <colors>
+    <option name="CARET_COLOR" value="ffd866" />
+    <option name="CARET_ROW_COLOR" value="2d2a2e" />
+    <option name="GUTTER_BACKGROUND" value="222222" />
+    <option name="INDENT_GUIDE" value="403e41" />
+    <option name="LINE_NUMBERS_COLOR" value="727072" />
+    <option name="SELECTION_BACKGROUND" value="49464e" />
+    <option name="SELECTION_FOREGROUND" value="ffffff" />
+  </colors>
+  <attributes>
+    <option name="TEXT">
+      <value>
+        <option name="FOREGROUND" value="fcfcfa" />
+        <option name="BACKGROUND" value="222222" />
+      </value>
+    </option>
+    <option name="DEFAULT_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="ff6188" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="DEFAULT_STRING">
+      <value>
+        <option name="FOREGROUND" value="a9dc76" />
+      </value>
+    </option>
+    <option name="DEFAULT_NUMBER">
+      <value>
+        <option name="FOREGROUND" value="ab9df2" />
+      </value>
+    </option>
+    <option name="DEFAULT_LINE_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="727072" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+    <option name="DEFAULT_FUNCTION_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="78dce8" />
+      </value>
+    </option>
+    <option name="DEFAULT_IDENTIFIER">
+      <value>
+        <option name="FOREGROUND" value="fcfcfa" />
+      </value>
+    </option>
+    <option name="DEFAULT_DOC_COMMENT">
+      <value>
+        <option name="FOREGROUND" value="727072" />
+        <option name="FONT_TYPE" value="2" />
+      </value>
+    </option>
+  </attributes>
+</scheme>

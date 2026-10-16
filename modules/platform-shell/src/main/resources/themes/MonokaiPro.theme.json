@@ -1,0 +1,100 @@
+{
+  "name": "Monokai Pro",
+  "author": "indoctrinatedrecluse",
+  "dark": true,
+  "editorScheme": "/themes/MonokaiPro.xml",
+  "colors": {
+    "background": "#222222",
+    "foreground": "#FCFCFA",
+    "primary": "#FFD866",
+    "secondary": "#78DCE8",
+    "accent": "#FFD866",
+    "border": "#403E41",
+    "selectionBackground": "#49464E",
+    "selectionForeground": "#FFFFFF"
+  },
+  "ui": {
+    "*": {
+      "background": "#222222",
+      "foreground": "#FCFCFA",
+      "inactiveForeground": "#727072",
+      "selectionBackground": "#49464E",
+      "selectionForeground": "#FFFFFF",
+      "selectionInactiveBackground": "#363337",
+      "selectionInactiveForeground": "#C1C0C0",
+      "borderColor": "#403E41",
+      "separatorColor": "#403E41"
+    },
+    "Borders": {
+      "color": "#403E41",
+      "ContrastBorderColor": "#5B595C"
+    },
+    "Button": {
+      "startBackground": "#363337",
+      "endBackground": "#363337",
+      "startBorderColor": "#5B595C",
+      "endBorderColor": "#5B595C",
+      "focusedBorderColor": "#FFD866",
+      "foreground": "#FCFCFA",
+      "default": {
+        "startBackground": "#FF6188",
+        "endBackground": "#FF6188",
+        "foreground": "#FFFFFF",
+        "focusedBorderColor": "#FFD866"
+      }
+    },
+    "ComboBox": {
+      "background": "#2D2A2E",
+      "nonEditableBackground": "#2D2A2E",
+      "selectionBackground": "#49464E",
+      "selectionForeground": "#FFFFFF"
+    },
+    "Editor": {
+      "background": "#222222",
+      "foreground": "#FCFCFA",
+      "shortcutForeground": "#FFD866"
+    },
+    "EditorTabs": {
+      "background": "#19181A",
+      "underlinedTabBackground": "#222222",
+      "underlineColor": "#FFD866",
+      "underlineHeight": 2,
+      "inactiveUnderlineColor": "#403E41",
+      "hoverBackground": "#2D2A2E"
+    },
+    "Panel": {
+      "background": "#222222"
+    },
+    "ScrollBar": {
+      "trackColor": "#222222",
+      "thumbColor": "#403E41",
+      "hoverThumbColor": "#FFD866"
+    },
+    "SearchEverywhere": {
+      "SearchField": {
+        "background": "#2D2A2E",
+        "borderColor": "#FFD866"
+      }
+    },
+    "StatusBar": {
+      "background": "#19181A",
+      "borderColor": "#403E41"
+    },
+    "ToolWindow": {
+      "Header": {
+        "background": "#2D2A2E",
+        "inactiveBackground": "#222222",
+        "borderColor": "#403E41"
+      },
+      "Button": {
+        "selectedBackground": "#49464E",
+        "hoverBackground": "#363337"
+      }
+    },
+    "Tree": {
+      "background": "#222222",
+      "selectionBackground": "#49464E",
+      "selectionForeground": "#FFFFFF"
+    }
+  }
+}

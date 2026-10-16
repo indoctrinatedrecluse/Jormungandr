@@ -285,6 +285,25 @@ object JormungandrBranding {
             } else if (actionManager.getAction("JormungandrCheckForUpdates") == null) {
                 actionManager.registerAction("JormungandrCheckForUpdates", updateAction)
             }
+
+            // Remove duplicate upstream 'CheckForUpdate' from HelpMenu if Jormungandr.CheckForUpdates is present
+            val helpGroup = actionManager.getAction("HelpMenu")
+            if (helpGroup is com.intellij.openapi.actionSystem.DefaultActionGroup) {
+                val children = helpGroup.getChildren(null)
+                val hasJormungandrItem = children.any { child ->
+                    val id = actionManager.getId(child)
+                    id == "Jormungandr.CheckForUpdates" || id == "JormungandrCheckForUpdates"
+                }
+                if (hasJormungandrItem) {
+                    for (child in children) {
+                        val id = actionManager.getId(child)
+                        if (id == "CheckForUpdate") {
+                            helpGroup.remove(child)
+                            LOG.info("Removed duplicate upstream 'CheckForUpdate' from HelpMenu.")
+                        }
+                    }
+                }
+            }
             LOG.info("Registered Jörmungandr CheckForUpdatesAction.")
         } catch (e: Throwable) {
             LOG.warn("Could not register CheckForUpdates action (non-fatal)", e)
@@ -297,7 +316,22 @@ object JormungandrBranding {
      */
     fun suppressUpstreamJetBrainsUpdates() {
         try {
-            // 1. Disable update checks in UpdateSettings
+            // 1. Force runtime System properties to disable JetBrains platform update checking
+            val updateProps = listOf(
+                "ide.no.platform.update" to "true",
+                "idea.no.platform.update" to "true",
+                "ide.check.update" to "false",
+                "idea.check.updates" to "false",
+                "updates.disabled" to "true",
+                "idea.external.update.manager" to "disabled"
+            )
+            for ((key, value) in updateProps) {
+                try {
+                    System.setProperty(key, value)
+                } catch (_: Throwable) {}
+            }
+
+            // 2. Disable update checks in UpdateSettings
             val updateSettingsClass = Class.forName("com.intellij.openapi.updateSettings.impl.UpdateSettings")
             val getInstance = updateSettingsClass.getMethod("getInstance")
             val updateSettings = getInstance.invoke(null)
@@ -332,11 +366,15 @@ object JormungandrBranding {
                             val statePlugins = state.javaClass.getMethod("setPluginsCheckNeeded", Boolean::class.javaPrimitiveType)
                             statePlugins.invoke(state, false)
                         } catch (_: Throwable) {}
+                        try {
+                            val stateWhatsNew = state.javaClass.getMethod("setShowWhatsNewEditor", Boolean::class.javaPrimitiveType)
+                            stateWhatsNew.invoke(state, false)
+                        } catch (_: Throwable) {}
                     }
                 } catch (_: Throwable) {}
             }
 
-            // 2. Cancel any scheduled background update checks in UpdateCheckerService
+            // 3. Cancel any scheduled background update checks in UpdateCheckerService
             try {
                 val updateServiceClass = Class.forName("com.intellij.openapi.updateSettings.impl.UpdateCheckerService")
                 val getServiceInstance = updateServiceClass.getMethod("getInstance")
@@ -347,7 +385,7 @@ object JormungandrBranding {
                 }
             } catch (_: Throwable) {}
 
-            // 3. Mute upstream NotificationGroups for IDE and Plugin Updates
+            // 4. Mute upstream NotificationGroups for IDE and Plugin Updates
             try {
                 val notifConfigClass = Class.forName("com.intellij.notification.impl.NotificationsConfigurationImpl")
                 val getNotifConfig = notifConfigClass.getMethod("getInstanceImpl")
@@ -361,7 +399,19 @@ object JormungandrBranding {
                         Boolean::class.javaPrimitiveType,
                         Boolean::class.javaPrimitiveType
                     )
-                    for (groupId in listOf("IDE and Plugin Updates", "Platform Updates", "Updates")) {
+                    val groupsToMute = listOf(
+                        "IDE and Plugin Updates",
+                        "Platform Updates",
+                        "Updates",
+                        "Plugins Updates",
+                        "Plugin Update",
+                        "Plugin updates",
+                        "System Updates",
+                        "ide.updates",
+                        "Plugin Manager Updates",
+                        "External System Updates"
+                    )
+                    for (groupId in groupsToMute) {
                         try {
                             changeSettingsMethod.invoke(notifConfig, groupId, noneType, false, false)
                         } catch (_: Throwable) {}

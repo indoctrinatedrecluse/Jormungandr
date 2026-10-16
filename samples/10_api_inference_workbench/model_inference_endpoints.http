@@ -1,0 +1,39 @@
+### Jörmungandr API & Inference Microservice Workbench
+### Test mock endpoints directly using the built-in HTTP Client
+
+### 1. Test Model Health & Hardware Telemetry
+GET http://127.0.0.1:8089/v1/models/telemetry
+Accept: application/json
+
+### 2. Generate Dense Embeddings
+POST http://127.0.0.1:8089/v1/models/text-embedding/embed
+Content-Type: application/json
+Accept: application/json
+
+{
+  "inputs": [
+    "High-throughput zero-copy columnar data processing",
+    "Adversarial LLM evaluation and red-teaming benchmark"
+  ],
+  "normalize": true
+}
+
+### 3. Chat Completion Request (OpenAI / vLLM compatible)
+POST http://127.0.0.1:8089/v1/chat/completions
+Content-Type: application/json
+Accept: application/json
+
+{
+  "model": "meta-llama-3.1-8b-instruct",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are Jörmungandr Copilot, an expert AI pair-programmer."
+    },
+    {
+      "role": "user",
+      "content": "What are the core features of the Jörmungandr IDE?"
+    }
+  ],
+  "temperature": 0.2
+}
