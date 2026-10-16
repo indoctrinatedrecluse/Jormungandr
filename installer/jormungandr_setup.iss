@@ -2,7 +2,9 @@
 ; Apache 2.0 (c) 2025-2026 indoctrinatedrecluse
 
 #define MyAppName "Jörmungandr"
-#define MyAppVersion "1.5.0"
+#ifndef MyAppVersion
+  #define MyAppVersion "1.6.0"
+#endif
 #define MyAppPublisher "indoctrinatedrecluse"
 #define MyAppURL "https://github.com/indoctrinatedrecluse/Jormungandr"
 #define MyAppExeName "bin\idea64.exe"
